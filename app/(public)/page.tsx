@@ -187,7 +187,7 @@ export default function BerandaPage() {
                         <h2 className="font-semibold text-gray-800 text-sm">Tim Pengembang Web</h2>
                     </div>
 
-                    <div className="bg-primary rounded-2xl p-4">
+                    <div className="bg-primary bg-gradient-to-br from-primary to-primary2 rounded-2xl p-4">
                         <p className="text-white/80 text-xs leading-relaxed text-justify mb-1">
                             Website ini merupakan hasil Program Kerja dari{' '}
                             <span className="text-white font-semibold">

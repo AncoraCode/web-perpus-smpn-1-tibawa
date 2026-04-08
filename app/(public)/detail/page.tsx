@@ -8,7 +8,7 @@ export default function DetailSekolahPage() {
             <header className="relative bg-primary overflow-hidden">
                 <div className="absolute inset-0">
                     <img
-                        src="/assets/img/sekolah.jpg"
+                        src="/assets/img/sekolah2.jpg"
                         alt="SMP Negeri 1 Tibawa"
                         className="w-full h-full object-cover opacity-20"
                     />
