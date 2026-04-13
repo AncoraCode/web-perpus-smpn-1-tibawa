@@ -66,7 +66,7 @@ export default function DetailSekolahPage() {
                         </div>
                         <div>
                             <p className="text-[10px] font-semibold text-accent uppercase tracking-wide">NPSN</p>
-                            <p className="text-sm font-medium text-gray-800">40500123</p>
+                            <p className="text-sm font-medium text-gray-800">40500377</p>
                         </div>
                     </div>
 
@@ -102,7 +102,7 @@ export default function DetailSekolahPage() {
                         <div>
                             <p className="text-[10px] font-semibold text-red-500 uppercase tracking-wide">Email</p>
                             <a href="mailto:smpn1tibawa@gmail.com" className="text-sm font-medium text-gray-800 hover:text-accent transition-colors">
-                                smpn1tibawa@gmail.com
+                                smpn01tbw@gmail.com
                             </a>
                         </div>
                     </div>
