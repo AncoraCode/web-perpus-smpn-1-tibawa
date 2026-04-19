@@ -16,7 +16,7 @@ interface DashboardNavbarProps {
         full_name: string
         role: string
         avatar_url: string | null
-    }
+    } | any
     generalSetting: any
     onLogout: () => void
 }
@@ -84,7 +84,7 @@ export default function DashboardNavbar({ user, generalSetting, onLogout }: Dash
                                     />
                                 ) : (
                                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm">
-                                        {user.full_name.charAt(0)}
+                                        {user.full_name?.charAt(0)}
                                     </div>
                                 )}
                                 <div className="text-left">
@@ -161,7 +161,7 @@ export default function DashboardNavbar({ user, generalSetting, onLogout }: Dash
                                     />
                                 ) : (
                                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold">
-                                        {user.full_name.charAt(0)}
+                                        {user.full_name?.charAt(0)}
                                     </div>
                                 )}
                                 <div>

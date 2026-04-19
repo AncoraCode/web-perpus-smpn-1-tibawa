@@ -37,3 +37,8 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Hide root bottom nav when dashboard-container exists */
+body:has(.dashboard-container) .max-w-mobile:not(.dashboard-container) > nav {
+  display: none !important;
+}

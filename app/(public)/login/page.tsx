@@ -28,7 +28,10 @@ export default function LoginPage() {
             })
             const result = await response.json()
             NProgress.done()
-            if (!response.ok) throw new Error(result.error || 'Login gagal')
+            if (!response.ok) {
+                setFormData({ username: formData.username, password: '' })
+                throw new Error(result.error || 'Login gagal')
+            }
             window.location.href = '/dashboard'
         } catch (err: any) {
             setError(err.message || 'Terjadi kesalahan, coba lagi')
@@ -62,7 +65,7 @@ export default function LoginPage() {
                             src="/assets/img/logo-sekolah.png"
                             alt="Logo SMPN 1 Tibawa"
                             className="w-24 h-24 object-contain"
-                            // onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                        // onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                         />
                     </div>
                     <h1 className="text-white font-semibold text-2xl mb-1">Login</h1>
