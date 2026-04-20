@@ -54,9 +54,8 @@ export default function DashboardBottomNav({ user }: DashboardBottomNavProps) {
                 />
             )}
 
-            {/* Expanded Menu - FIXED POSITION */}
-            <div className={`fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-mobile bg-white rounded-t-3xl shadow-2xl z-50 transition-transform duration-300 ${
-                isMenuOpen ? 'translate-y-0' : 'translate-y-full'
+            <div className={`fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-mobile bg-white rounded-t-3xl shadow-2xl z-50 transition-transform duration-300 py-4 ${
+                isMenuOpen ? 'translate-y-4' : 'translate-y-[150%]'
             }`}>
                 <div className="p-6">
                     {/* Handle */}

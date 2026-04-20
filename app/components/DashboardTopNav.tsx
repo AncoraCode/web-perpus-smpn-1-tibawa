@@ -14,20 +14,23 @@ interface DashboardTopNavProps {
 
 export default function DashboardTopNav({ user }: DashboardTopNavProps) {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+    const [isOpenLogout, setIsOpenLogout] = useState(false)
     const router = useRouter()
 
     const handleLogout = async () => {
-        try {
-            const response = await fetch('/api/auth', {
-                method: 'DELETE'
-            })
+        if (isOpenLogout) {
+            try {
+                const response = await fetch('/api/auth', {
+                    method: 'DELETE'
+                })
 
-            if (response.ok) {
-                NProgress.start()
-                router.push('/login')
+                if (response.ok) {
+                    NProgress.start()
+                    router.push('/login')
+                }
+            } catch (error) {
+                console.error('Logout error:', error)
             }
-        } catch (error) {
-            console.error('Logout error:', error)
         }
     }
 
@@ -36,12 +39,12 @@ export default function DashboardTopNav({ user }: DashboardTopNavProps) {
     return (
         <header className="fixed top-0 w-full max-w-mobile z-40 bg-white border-b border-gray-200">
             <div className="px-4 py-3 flex items-center justify-between">
-                
+
                 {/* Kiri: Logo + Title */}
                 <div className="flex items-center gap-3">
-                    <img 
-                        src="/assets/img/logo-sekolah.png" 
-                        alt="Logo SMP Negeri 1 Tibawa" 
+                    <img
+                        src="/assets/img/logo-sekolah.png"
+                        alt="Logo SMP Negeri 1 Tibawa"
                         className="w-12 h-12 object-contain"
                     />
                     <div>
@@ -53,7 +56,7 @@ export default function DashboardTopNav({ user }: DashboardTopNavProps) {
                         </p>
                     </div>
                 </div>
-                
+
                 {/* Kanan: Dropdown Profile */}
                 <div className="relative">
                     <button
@@ -78,11 +81,11 @@ export default function DashboardTopNav({ user }: DashboardTopNavProps) {
                     {isDropdownOpen && (
                         <>
                             {/* Backdrop */}
-                            <div 
-                                className="fixed inset-0 z-30" 
+                            <div
+                                className="fixed inset-0 z-30"
                                 onClick={() => setIsDropdownOpen(false)}
                             />
-                            
+
                             {/* Menu */}
                             <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-lg border border-gray-100 z-40 overflow-hidden">
                                 {/* User Info */}
@@ -106,8 +109,12 @@ export default function DashboardTopNav({ user }: DashboardTopNavProps) {
 
                                 <button
                                     onClick={() => {
-                                        setIsDropdownOpen(false)
-                                        handleLogout()
+                                        let confirmed = confirm("Apakah Anda yakin ingin logout?");
+
+                                        if(confirmed) {
+                                            handleLogout()
+                                            setIsDropdownOpen(false)
+                                        }
                                     }}
                                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100"
                                 >
