@@ -25,6 +25,7 @@
     "@tiptap/extension-placeholder": "^3.19.0",
     "@tiptap/react": "^3.19.0",
     "@tiptap/starter-kit": "^3.19.0",
+    "@zxing/library": "^0.21.3",
     "aos": "^2.3.4",
     "clsx": "^2.1.1",
     "framer-motion": "^11.15.0",
