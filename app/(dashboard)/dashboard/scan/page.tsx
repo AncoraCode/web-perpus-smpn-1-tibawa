@@ -7,6 +7,7 @@ import Modal from '@/app/components/Modal'
 
 export default function ScanPage() {
     const videoRef = useRef<HTMLVideoElement>(null)
+    const containerRef = useRef<HTMLDivElement>(null)
     const [stream, setStream] = useState<MediaStream | null>(null)
     const [error, setError] = useState<string>('')
     const [loading, setLoading] = useState(true)
@@ -35,13 +36,22 @@ export default function ScanPage() {
             setLoading(true)
             setError('')
 
-            const mediaStream = await navigator.mediaDevices.getUserMedia({
+            // Check if getUserMedia is supported
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                throw new Error('Browser tidak mendukung akses kamera. Gunakan browser modern seperti Chrome atau Safari.')
+            }
+
+            // Request camera dengan constraints yang lebih compatible
+            const constraints = {
                 video: {
-                    facingMode: 'environment',
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 }
-                }
-            })
+                    facingMode: { ideal: 'environment' },
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false
+            }
+
+            const mediaStream = await navigator.mediaDevices.getUserMedia(constraints)
 
             setStream(mediaStream)
             setHasPermission(true)
@@ -51,28 +61,37 @@ export default function ScanPage() {
                 
                 // Tunggu video ready
                 videoRef.current.onloadedmetadata = () => {
-                    videoRef.current?.play()
-                    setTimeout(() => {
-                        startScanning()
-                    }, 500)
+                    videoRef.current?.play().then(() => {
+                        console.log('Camera started successfully')
+                        setTimeout(() => {
+                            startScanning()
+                        }, 500)
+                    }).catch(err => {
+                        console.error('Error playing video:', err)
+                        setError('Gagal memutar video kamera.')
+                        setLoading(false)
+                    })
                 }
             }
 
         } catch (err: any) {
             console.error('Error accessing camera:', err)
             setHasPermission(false)
-
-            if (err.name === 'NotAllowedError') {
-                setError('Akses kamera ditolak. Silakan izinkan akses kamera di pengaturan browser Anda.')
-            } else if (err.name === 'NotFoundError') {
-                setError('Kamera tidak ditemukan pada perangkat ini.')
-            } else if (err.name === 'NotReadableError') {
-                setError('Kamera sedang digunakan oleh aplikasi lain.')
-            } else {
-                setError('Gagal mengakses kamera. Pastikan browser Anda mendukung akses kamera.')
-            }
-        } finally {
             setLoading(false)
+
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                setError('Akses kamera ditolak. Silakan izinkan akses kamera di pengaturan browser Anda.')
+            } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                setError('Kamera tidak ditemukan pada perangkat ini.')
+            } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                setError('Kamera sedang digunakan oleh aplikasi lain.')
+            } else if (err.name === 'OverconstrainedError') {
+                setError('Kamera tidak mendukung resolusi yang diminta.')
+            } else if (err.name === 'SecurityError') {
+                setError('Akses kamera diblokir karena alasan keamanan. Pastikan menggunakan HTTPS.')
+            } else {
+                setError(err.message || 'Gagal mengakses kamera. Pastikan browser Anda mendukung akses kamera.')
+            }
         }
     }
 
@@ -81,12 +100,13 @@ export default function ScanPage() {
 
         try {
             setIsScanning(true)
+            setLoading(false)
             const codeReader = new BrowserMultiFormatReader()
             codeReaderRef.current = codeReader
 
             // Continuous scanning dengan interval
             const scanContinuously = async () => {
-                if (!videoRef.current || !isScanning) return
+                if (!videoRef.current) return
 
                 try {
                     const result = await codeReader.decodeOnceFromVideoDevice(undefined, videoRef.current)
@@ -109,7 +129,7 @@ export default function ScanPage() {
                     }
                     
                     // Continue scanning
-                    if (isScanning) {
+                    if (isScanning && videoRef.current) {
                         scanIntervalRef.current = setTimeout(scanContinuously, 100)
                     }
                 }
@@ -148,6 +168,8 @@ export default function ScanPage() {
     }
 
     const handleRetry = () => {
+        setError('')
+        setLoading(true)
         startCamera()
     }
 
@@ -161,16 +183,12 @@ export default function ScanPage() {
     }
 
     const handleProcessBarcode = async () => {
-        // TODO: Implement barcode processing logic
-        // Bisa redirect ke halaman peminjaman dengan kode buku
         console.log('Processing barcode:', detectedCode)
-        
-        // Contoh: redirect ke peminjaman dengan query
         window.location.href = `/dashboard/peminjaman?kode=${detectedCode}`
     }
 
     return (
-        <div className="fixed inset-0 bg-black" style={{ marginTop: '-4rem', paddingBottom: '0' }}>
+        <div ref={containerRef} className="relative w-full h-full bg-black overflow-hidden">
 
             {/* Loading State */}
             {loading && (
@@ -204,18 +222,17 @@ export default function ScanPage() {
             {/* Camera Preview */}
             {!loading && !error && (
                 <>
-                    {/* Video Element - Fullscreen */}
+                    {/* Video Element - Full container */}
                     <video
                         ref={videoRef}
                         autoPlay
                         playsInline
                         muted
-                        className="fixed inset-0 w-full h-full object-cover"
-                        style={{ zIndex: 1 }}
+                        className="absolute inset-0 w-full h-full object-cover"
                     />
 
                     {/* Scan Frame Overlay */}
-                    <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 10 }}>
+                    <div className="absolute inset-0 flex items-center justify-center z-10">
                         {/* Dark overlay with transparent center */}
                         <div className="absolute inset-0 bg-black/50" />
 
@@ -235,7 +252,7 @@ export default function ScanPage() {
                     </div>
 
                     {/* Instructions */}
-                    <div className="fixed bottom-24 left-0 right-0 px-6 z-20">
+                    <div className="absolute bottom-24 left-0 right-0 px-6 z-20">
                         <div className="bg-black/70 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
                             <p className="text-white text-center text-sm font-medium mb-1">
                                 Arahkan kamera ke barcode buku
@@ -247,7 +264,7 @@ export default function ScanPage() {
                     </div>
 
                     {/* Camera Status */}
-                    <div className="fixed top-6 left-0 right-0 px-6 z-20 flex justify-center">
+                    <div className="absolute top-4 left-0 right-0 px-6 z-20 flex justify-center">
                         <div className={`backdrop-blur-sm rounded-xl px-4 py-2 border inline-flex items-center gap-2 ${
                             isScanning 
                                 ? 'bg-green-500/20 border-green-500/30' 
