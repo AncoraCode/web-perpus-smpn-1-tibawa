@@ -32,8 +32,7 @@ export default function DashboardTopNav({ user }: DashboardTopNavProps) {
             })
 
             if (response.ok) {
-                NProgress.start()
-                router.push('/login')
+                window.location.replace('/login')
             }
         } catch (error) {
             console.error('Logout error:', error)
