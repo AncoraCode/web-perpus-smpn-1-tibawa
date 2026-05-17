@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import {
-    Search, Plus, Edit2, Trash2, GraduationCap,
+    Search, Plus, Edit2, Trash2, GraduationCap, X,
     MapPin, Phone, Mail, Users, CheckCircle2, XCircle,
 } from 'lucide-react'
 import Modal from '@/app/components/Modal'
@@ -52,10 +52,10 @@ interface SiswaClientProps {
 /* ─────────────────────────────────────────
    CONSTANTS
 ───────────────────────────────────────── */
-const PAGE_SIZE = 30
+const PAGE_SIZE = 10
 
 const TINGKAT_OPTIONS = ['VII', 'VIII', 'IX']
-const NOMOR_OPTIONS   = ['1', '2', '3', '4', '5', '6', '7', '8']
+const NOMOR_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8']
 
 const EMPTY_FORM: FormData = {
     nis: '', nisn: '', nama_lengkap: '',
@@ -69,10 +69,10 @@ const EMPTY_FORM: FormData = {
 }
 
 const STATUS_CONFIG = {
-    aktif:  { label: 'Aktif',  bg: 'bg-green-100',  text: 'text-green-700'  },
-    lulus:  { label: 'Lulus',  bg: 'bg-blue-100',   text: 'text-blue-700'   },
+    aktif: { label: 'Aktif', bg: 'bg-green-100', text: 'text-green-700' },
+    lulus: { label: 'Lulus', bg: 'bg-blue-100', text: 'text-blue-700' },
     pindah: { label: 'Pindah', bg: 'bg-yellow-100', text: 'text-yellow-700' },
-    keluar: { label: 'Keluar', bg: 'bg-red-100',    text: 'text-red-700'    },
+    keluar: { label: 'Keluar', bg: 'bg-red-100', text: 'text-red-700' },
 }
 
 /* ─────────────────────────────────────────
@@ -169,20 +169,18 @@ function SiswaFormFields({ form, formError, disabled, onChange }: FormFieldsProp
                 <div className="flex gap-2">
                     <button type="button" disabled={disabled}
                         onClick={() => onChange('jenis_kelamin', 'Laki-laki')}
-                        className={`flex-1 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
-                            form.jenis_kelamin === 'Laki-laki'
+                        className={`flex-1 py-2.5 rounded-lg border text-sm font-medium transition-colors ${form.jenis_kelamin === 'Laki-laki'
                                 ? 'bg-accent text-white border-accent'
                                 : 'bg-white text-gray-600 border-gray-200 hover:border-accent'
-                        }`}>
+                            }`}>
                         ♂ Laki-laki
                     </button>
                     <button type="button" disabled={disabled}
                         onClick={() => onChange('jenis_kelamin', 'Perempuan')}
-                        className={`flex-1 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
-                            form.jenis_kelamin === 'Perempuan'
+                        className={`flex-1 py-2.5 rounded-lg border text-sm font-medium transition-colors ${form.jenis_kelamin === 'Perempuan'
                                 ? 'bg-pink-500 text-white border-pink-500'
                                 : 'bg-white text-gray-600 border-gray-200 hover:border-pink-400'
-                        }`}>
+                            }`}>
                         ♀ Perempuan
                     </button>
                 </div>
@@ -258,11 +256,10 @@ function SiswaFormFields({ form, formError, disabled, onChange }: FormFieldsProp
                         value={form.kelas_nomor}
                         disabled={disabled || !form.kelas_tingkat}
                         onChange={e => onChange('kelas_nomor', e.target.value)}
-                        className={`flex-1 px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-colors ${
-                            !form.kelas_tingkat
+                        className={`flex-1 px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-colors ${!form.kelas_tingkat
                                 ? 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed'
                                 : 'border-gray-200 disabled:bg-gray-50'
-                        }`}
+                            }`}
                     >
                         <option value="">-- Nomor --</option>
                         {NOMOR_OPTIONS.map(n => (
@@ -307,31 +304,31 @@ function SiswaFormFields({ form, formError, disabled, onChange }: FormFieldsProp
    MAIN COMPONENT
 ───────────────────────────────────────── */
 export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
-    const [siswaList, setSiswaList]       = useState<Siswa[]>(siswaData)
-    const [searchQuery,  setSearchQuery]  = useState('')
+    const [siswaList, setSiswaList] = useState<Siswa[]>(siswaData)
+    const [searchQuery, setSearchQuery] = useState('')
     const [filterStatus, setFilterStatus] = useState('semua')
-    const [filterKelas,  setFilterKelas]  = useState('semua')
+    const [filterKelas, setFilterKelas] = useState('semua')
 
     // Infinite scroll
-    const [visibleCount, setVisibleCount]   = useState(PAGE_SIZE)
-    const [loadingMore,  setLoadingMore]    = useState(false)
+    const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+    const [loadingMore, setLoadingMore] = useState(false)
     const observerRef = useRef<IntersectionObserver | null>(null)
     const sentinelRef = useRef<HTMLDivElement | null>(null)
 
     // Modals
-    const [showAddModal,    setShowAddModal]    = useState(false)
-    const [showEditModal,   setShowEditModal]   = useState(false)
+    const [showAddModal, setShowAddModal] = useState(false)
+    const [showEditModal, setShowEditModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [showDetailModal, setShowDetailModal] = useState(false)
     const [notif, setNotif] = useState<{ show: boolean; success: boolean; message: string }>({
         show: false, success: true, message: ''
     })
 
-    const [selected,     setSelected]     = useState<Siswa | null>(null)
+    const [selected, setSelected] = useState<Siswa | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [isDeleting,   setIsDeleting]   = useState(false)
-    const [formError,    setFormError]    = useState('')
-    const [form,         setForm]         = useState<FormData>({ ...EMPTY_FORM })
+    const [isDeleting, setIsDeleting] = useState(false)
+    const [formError, setFormError] = useState('')
+    const [form, setForm] = useState<FormData>({ ...EMPTY_FORM })
 
     const supabase = createClient()
 
@@ -343,7 +340,7 @@ export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
             s.nis.toLowerCase().includes(q) ||
             (s.kelas ?? '').toLowerCase().includes(q)
         const matchStatus = filterStatus === 'semua' || s.status === filterStatus
-        const matchKelas  = filterKelas  === 'semua' || s.kelas  === filterKelas
+        const matchKelas = filterKelas === 'semua' || s.kelas === filterKelas
         return matchSearch && matchStatus && matchKelas
     }), [siswaList, searchQuery, filterStatus, filterKelas])
 
@@ -351,7 +348,7 @@ export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
     useEffect(() => { setVisibleCount(PAGE_SIZE) }, [searchQuery, filterStatus, filterKelas])
 
     const visibleSiswa = filtered.slice(0, visibleCount)
-    const hasMore      = visibleCount < filtered.length
+    const hasMore = visibleCount < filtered.length
 
     /* ── Infinite scroll via IntersectionObserver ── */
     const loadMore = useCallback(() => {
@@ -416,19 +413,19 @@ export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
         setSelected(s)
         const { tingkat, nomor } = parseKelas(s.kelas)
         setForm({
-            nis:           s.nis,
-            nisn:          s.nisn          ?? '',
-            nama_lengkap:  s.nama_lengkap,
+            nis: s.nis,
+            nisn: s.nisn ?? '',
+            nama_lengkap: s.nama_lengkap,
             jenis_kelamin: s.jenis_kelamin === 'Perempuan' ? 'Perempuan' : 'Laki-laki',
-            tempat_lahir:  s.tempat_lahir  ?? '',
+            tempat_lahir: s.tempat_lahir ?? '',
             tanggal_lahir: s.tanggal_lahir ?? '',
-            alamat:        s.alamat        ?? '',
-            telepon:       s.telepon       ?? '',
-            email:         s.email         ?? '',
+            alamat: s.alamat ?? '',
+            telepon: s.telepon ?? '',
+            email: s.email ?? '',
             kelas_tingkat: tingkat,
-            kelas_nomor:   nomor,
-            tahun_ajaran:  s.tahun_ajaran  ?? tahunAjaranDefault(),
-            status:        s.status,
+            kelas_nomor: nomor,
+            tahun_ajaran: s.tahun_ajaran ?? tahunAjaranDefault(),
+            status: s.status,
         })
         setFormError('')
         setShowEditModal(true)
@@ -439,22 +436,22 @@ export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
 
     /* ── build payload ── */
     const buildPayload = () => ({
-        nis:           form.nis.trim(),
-        nisn:          form.nisn.trim()         || null,
-        nama_lengkap:  form.nama_lengkap.trim(),
+        nis: form.nis.trim(),
+        nisn: form.nisn.trim() || null,
+        nama_lengkap: form.nama_lengkap.trim(),
         jenis_kelamin: form.jenis_kelamin,
-        tempat_lahir:  form.tempat_lahir.trim() || null,
-        tanggal_lahir: form.tanggal_lahir       || null,
-        alamat:        form.alamat.trim()       || null,
-        telepon:       form.telepon.trim()      || null,
-        email:         form.email.trim()        || null,
-        kelas:         buildKelas(form.kelas_tingkat, form.kelas_nomor) || null,
-        tahun_ajaran:  form.tahun_ajaran.trim() || null,
-        status:        form.status,
+        tempat_lahir: form.tempat_lahir.trim() || null,
+        tanggal_lahir: form.tanggal_lahir || null,
+        alamat: form.alamat.trim() || null,
+        telepon: form.telepon.trim() || null,
+        email: form.email.trim() || null,
+        kelas: buildKelas(form.kelas_tingkat, form.kelas_nomor) || null,
+        tahun_ajaran: form.tahun_ajaran.trim() || null,
+        status: form.status,
     })
 
     const validate = (): string => {
-        if (!form.nis.trim())          return 'NIS wajib diisi'
+        if (!form.nis.trim()) return 'NIS wajib diisi'
         if (!form.nama_lengkap.trim()) return 'Nama Lengkap wajib diisi'
         if (form.kelas_tingkat && !form.kelas_nomor) return 'Nomor kelas wajib dipilih'
         return ''
@@ -547,11 +544,27 @@ export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
                     <input type="text" value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         placeholder="Cari nama atau NIS..."
-                        className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none" />
+                        className="w-full pl-9 pr-9 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none" />
+                    {searchQuery && (
+                        <button onClick={() => setSearchQuery('')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <X className="w-4 h-4" />
+                        </button>
+                    )}
                 </div>
-                <div className="flex gap-2">
+                {/* Filter Panel */}
+                <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold text-gray-700">Filter</p>
+                        {(filterStatus !== 'semua' || filterKelas !== 'semua') && (
+                            <button onClick={() => { setFilterStatus('semua'); setFilterKelas('semua') }}
+                                className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1">
+                                <X className="w-3 h-3" /> Reset
+                            </button>
+                        )}
+                    </div>
                     <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none">
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-accent">
                         <option value="semua">Semua Status</option>
                         <option value="aktif">Aktif</option>
                         <option value="lulus">Lulus</option>
@@ -559,7 +572,7 @@ export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
                         <option value="keluar">Keluar</option>
                     </select>
                     <select value={filterKelas} onChange={e => setFilterKelas(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none">
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-accent">
                         <option value="semua">Semua Kelas</option>
                         {kelasOptions.map(k => (
                             <option key={k} value={k}>{k}</option>
@@ -705,12 +718,10 @@ export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
                 title="Detail Siswa">
                 {selected && (
                     <div className="space-y-4">
-                        <div className={`rounded-xl p-4 flex items-center gap-3 ${
-                            selected.jenis_kelamin === 'Perempuan' ? 'bg-pink-50' : 'bg-blue-50'
-                        }`}>
-                            <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-xl flex-shrink-0 ${
-                                selected.jenis_kelamin === 'Perempuan' ? 'bg-pink-400' : 'bg-blue-400'
+                        <div className={`rounded-xl p-4 flex items-center gap-3 ${selected.jenis_kelamin === 'Perempuan' ? 'bg-pink-50' : 'bg-blue-50'
                             }`}>
+                            <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-xl flex-shrink-0 ${selected.jenis_kelamin === 'Perempuan' ? 'bg-pink-400' : 'bg-blue-400'
+                                }`}>
                                 {selected.nama_lengkap.charAt(0).toUpperCase()}
                             </div>
                             <div>
@@ -722,13 +733,15 @@ export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
 
                         {[
                             { label: 'Jenis Kelamin', value: selected.jenis_kelamin },
-                            { label: 'Kelas',         value: selected.kelas ? `Kelas ${selected.kelas}` : null },
-                            { label: 'Tahun Ajaran',  value: selected.tahun_ajaran },
-                            { label: 'Tempat Lahir',  value: selected.tempat_lahir },
-                            { label: 'Tanggal Lahir', value: selected.tanggal_lahir
-                                ? new Date(selected.tanggal_lahir).toLocaleDateString('id-ID', {
-                                    day: 'numeric', month: 'long', year: 'numeric'
-                                }) : null },
+                            { label: 'Kelas', value: selected.kelas ? `Kelas ${selected.kelas}` : null },
+                            { label: 'Tahun Ajaran', value: selected.tahun_ajaran },
+                            { label: 'Tempat Lahir', value: selected.tempat_lahir },
+                            {
+                                label: 'Tanggal Lahir', value: selected.tanggal_lahir
+                                    ? new Date(selected.tanggal_lahir).toLocaleDateString('id-ID', {
+                                        day: 'numeric', month: 'long', year: 'numeric'
+                                    }) : null
+                            },
                             { label: 'Status', value: STATUS_CONFIG[selected.status].label },
                         ].filter(r => r.value).map(row => (
                             <div key={row.label} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">

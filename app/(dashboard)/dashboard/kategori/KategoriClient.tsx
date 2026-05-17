@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import {
-    Search, Plus, Edit2, Trash2,
+    Search, Plus, Edit2, Trash2, X,
     Layers, BookOpen, CheckCircle2, XCircle,
 } from 'lucide-react'
 import Modal from '@/app/components/Modal'
@@ -94,14 +94,14 @@ function KategoriFormFields({ form, formError, disabled, onChange }: FormFieldsP
    WARNA BADGE per kategori (cycle)
 ───────────────────────────────────────── */
 const BADGE_COLORS = [
-    { bg: 'bg-blue-100',   text: 'text-blue-700',   icon: 'bg-blue-200'   },
-    { bg: 'bg-green-100',  text: 'text-green-700',  icon: 'bg-green-200'  },
+    { bg: 'bg-blue-100', text: 'text-blue-700', icon: 'bg-blue-200' },
+    { bg: 'bg-green-100', text: 'text-green-700', icon: 'bg-green-200' },
     { bg: 'bg-purple-100', text: 'text-purple-700', icon: 'bg-purple-200' },
     { bg: 'bg-orange-100', text: 'text-orange-700', icon: 'bg-orange-200' },
-    { bg: 'bg-pink-100',   text: 'text-pink-700',   icon: 'bg-pink-200'   },
-    { bg: 'bg-teal-100',   text: 'text-teal-700',   icon: 'bg-teal-200'   },
-    { bg: 'bg-amber-100',  text: 'text-amber-700',  icon: 'bg-amber-200'  },
-    { bg: 'bg-cyan-100',   text: 'text-cyan-700',   icon: 'bg-cyan-200'   },
+    { bg: 'bg-pink-100', text: 'text-pink-700', icon: 'bg-pink-200' },
+    { bg: 'bg-teal-100', text: 'text-teal-700', icon: 'bg-teal-200' },
+    { bg: 'bg-amber-100', text: 'text-amber-700', icon: 'bg-amber-200' },
+    { bg: 'bg-cyan-100', text: 'text-cyan-700', icon: 'bg-cyan-200' },
 ]
 
 const getBadgeColor = (index: number) => BADGE_COLORS[index % BADGE_COLORS.length]
@@ -111,21 +111,21 @@ const getBadgeColor = (index: number) => BADGE_COLORS[index % BADGE_COLORS.lengt
 ───────────────────────────────────────── */
 export default function KategoriClient({ kategoriData, user }: KategoriClientProps) {
     const [kategoriList, setKategoriList] = useState<Kategori[]>(kategoriData)
-    const [searchQuery,  setSearchQuery]  = useState('')
+    const [searchQuery, setSearchQuery] = useState('')
 
     // Modals
-    const [showAddModal,    setShowAddModal]    = useState(false)
-    const [showEditModal,   setShowEditModal]   = useState(false)
+    const [showAddModal, setShowAddModal] = useState(false)
+    const [showEditModal, setShowEditModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [notif, setNotif] = useState<{ show: boolean; success: boolean; message: string }>({
         show: false, success: true, message: ''
     })
 
-    const [selected,     setSelected]     = useState<Kategori | null>(null)
+    const [selected, setSelected] = useState<Kategori | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [isDeleting,   setIsDeleting]   = useState(false)
-    const [formError,    setFormError]    = useState('')
-    const [form,         setForm]         = useState<FormData>({ ...EMPTY_FORM })
+    const [isDeleting, setIsDeleting] = useState(false)
+    const [formError, setFormError] = useState('')
+    const [form, setForm] = useState<FormData>({ ...EMPTY_FORM })
 
     const supabase = createClient()
 
@@ -154,7 +154,7 @@ export default function KategoriClient({ kategoriData, user }: KategoriClientPro
     const openEdit = (k: Kategori) => {
         setSelected(k)
         setForm({
-            nama:      k.nama,
+            nama: k.nama,
             deskripsi: k.deskripsi ?? '',
         })
         setFormError('')
@@ -165,7 +165,7 @@ export default function KategoriClient({ kategoriData, user }: KategoriClientPro
 
     /* ── build payload ── */
     const buildPayload = () => ({
-        nama:      form.nama.trim(),
+        nama: form.nama.trim(),
         deskripsi: form.deskripsi.trim() || null,
     })
 
@@ -263,7 +263,7 @@ export default function KategoriClient({ kategoriData, user }: KategoriClientPro
 
             {/* Stats */}
             <div className="grid grid-cols-2 gap-3">
-                <div className="bg-gradient-to-br from-primary to-accent rounded-2xl p-4 text-white">
+                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white">
                     <Layers className="w-7 h-7 opacity-80 mb-2" />
                     <p className="text-2xl font-bold">{kategoriList.length}</p>
                     <p className="text-xs opacity-80 mt-0.5">Total Kategori</p>
@@ -285,8 +285,14 @@ export default function KategoriClient({ kategoriData, user }: KategoriClientPro
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder="Cari nama kategori..."
-                    className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none"
+                    className="w-full pl-9 pr-9 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none"
                 />
+                {searchQuery && (
+                    <button onClick={() => setSearchQuery('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <X className="w-4 h-4" />
+                    </button>
+                )}
             </div>
 
             {/* Add Button */}

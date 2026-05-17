@@ -1,0 +1,771 @@
+'use client'
+
+import { useState, useMemo } from 'react'
+import {
+    Search, Plus, Edit2, Trash2, X,
+    Users, Shield, User, Mail, Phone,
+    CheckCircle2, XCircle, Eye, EyeOff,
+    KeyRound, ShieldCheck, ShieldAlert,
+} from 'lucide-react'
+import Modal from '@/app/components/Modal'
+import { createClient } from '@/utils/supabase/client'
+
+/* ─────────────────────────────────────────
+   TYPES
+───────────────────────────────────────── */
+interface Profile {
+    id: string
+    username: string
+    nama_lengkap: string
+    email: string
+    telepon: string | null
+    role: 'admin' | 'guru'
+    foto_url: string | null
+    created_at: string
+    updated_at: string
+}
+
+type FormData = {
+    username: string
+    nama_lengkap: string
+    email: string
+    telepon: string
+    role: 'admin' | 'guru'
+    password: string
+    confirm_password: string
+}
+
+type ResetPwData = {
+    new_password: string
+    confirm_password: string
+}
+
+interface UsersClientProps {
+    usersData: Profile[]
+    currentUser: { id: string; role: string; username: string }
+}
+
+/* ─────────────────────────────────────────
+   CONSTANTS
+───────────────────────────────────────── */
+const EMPTY_FORM: FormData = {
+    username: '',
+    nama_lengkap: '',
+    email: '',
+    telepon: '',
+    role: 'guru',
+    password: '',
+    confirm_password: '',
+}
+
+/* ─────────────────────────────────────────
+   FORM FIELDS — di luar komponen utama
+───────────────────────────────────────── */
+interface FormFieldsProps {
+    form: FormData
+    formError: string
+    disabled: boolean
+    isEdit: boolean
+    showPassword: boolean
+    showConfirm: boolean
+    onTogglePassword: () => void
+    onToggleConfirm: () => void
+    onChange: (key: keyof FormData, val: string) => void
+}
+
+function UserFormFields({
+    form, formError, disabled, isEdit,
+    showPassword, showConfirm,
+    onTogglePassword, onToggleConfirm,
+    onChange,
+}: FormFieldsProps) {
+    return (
+        <div className="space-y-4">
+            {formError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex items-center gap-2">
+                    <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                    <p className="text-xs text-red-600 font-medium">{formError}</p>
+                </div>
+            )}
+
+            {/* Nama Lengkap */}
+            <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Nama Lengkap <span className="text-red-500">*</span>
+                </label>
+                <input type="text" value={form.nama_lengkap} disabled={disabled}
+                    onChange={e => onChange('nama_lengkap', e.target.value)}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none"
+                    placeholder="Nama lengkap pengguna" />
+            </div>
+
+            {/* Username */}
+            <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Username <span className="text-red-500">*</span>
+                    {isEdit && <span className="text-xs font-normal text-gray-400 ml-1">(tidak dapat diubah)</span>}
+                </label>
+                <input type="text" value={form.username} disabled={disabled || isEdit}
+                    onChange={e => onChange('username', e.target.value.toLowerCase().replace(/\s/g, '_'))}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none font-mono"
+                    placeholder="username_pengguna" />
+                {!isEdit && (
+                    <p className="text-xs text-gray-400 mt-1">Huruf kecil, tanpa spasi (spasi otomatis jadi _)</p>
+                )}
+            </div>
+
+            {/* Email */}
+            <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Email <span className="text-red-500">*</span>
+                </label>
+                <input type="email" value={form.email} disabled={disabled}
+                    onChange={e => onChange('email', e.target.value)}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none"
+                    placeholder="email@smpn1tibawa.sch.id" />
+            </div>
+
+            {/* Telepon */}
+            <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Telepon</label>
+                <input type="tel" value={form.telepon} disabled={disabled}
+                    onChange={e => onChange('telepon', e.target.value)}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none"
+                    placeholder="08123456789" />
+            </div>
+
+
+
+            {/* Password — hanya saat tambah baru */}
+            {!isEdit && (
+                <>
+                    <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                            Password <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                value={form.password} disabled={disabled}
+                                onChange={e => onChange('password', e.target.value)}
+                                className="w-full px-3 py-2.5 pr-10 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none"
+                                placeholder="Min. 6 karakter" />
+                            <button type="button" onClick={onTogglePassword}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                            Konfirmasi Password <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                            <input
+                                type={showConfirm ? 'text' : 'password'}
+                                value={form.confirm_password} disabled={disabled}
+                                onChange={e => onChange('confirm_password', e.target.value)}
+                                className={`w-full px-3 py-2.5 pr-10 border rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none transition-colors ${form.confirm_password && form.password !== form.confirm_password
+                                    ? 'border-red-300 bg-red-50'
+                                    : form.confirm_password && form.password === form.confirm_password
+                                        ? 'border-green-300'
+                                        : 'border-gray-200'
+                                    }`}
+                                placeholder="Ulangi password" />
+                            <button type="button" onClick={onToggleConfirm}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                        </div>
+                        {form.confirm_password && form.password !== form.confirm_password && (
+                            <p className="text-xs text-red-500 mt-1">Password tidak cocok</p>
+                        )}
+                        {form.confirm_password && form.password === form.confirm_password && (
+                            <p className="text-xs text-green-500 mt-1">✓ Password cocok</p>
+                        )}
+                    </div>
+                </>
+            )}
+        </div>
+    )
+}
+
+/* ─────────────────────────────────────────
+   RESET PASSWORD FIELDS — di luar komponen
+───────────────────────────────────────── */
+interface ResetPwFieldsProps {
+    data: ResetPwData
+    error: string
+    disabled: boolean
+    showNew: boolean
+    showConfirm: boolean
+    onToggleNew: () => void
+    onToggleConfirm: () => void
+    onChange: (key: keyof ResetPwData, val: string) => void
+}
+
+function ResetPasswordFields({
+    data, error, disabled,
+    showNew, showConfirm,
+    onToggleNew, onToggleConfirm,
+    onChange,
+}: ResetPwFieldsProps) {
+    return (
+        <div className="space-y-4">
+            {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex items-center gap-2">
+                    <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                    <p className="text-xs text-red-600 font-medium">{error}</p>
+                </div>
+            )}
+            <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Password Baru <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                    <input type={showNew ? 'text' : 'password'}
+                        value={data.new_password} disabled={disabled}
+                        onChange={e => onChange('new_password', e.target.value)}
+                        className="w-full px-3 py-2.5 pr-10 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none"
+                        placeholder="Min. 6 karakter" />
+                    <button type="button" onClick={onToggleNew}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                </div>
+            </div>
+            <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Konfirmasi Password <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                    <input type={showConfirm ? 'text' : 'password'}
+                        value={data.confirm_password} disabled={disabled}
+                        onChange={e => onChange('confirm_password', e.target.value)}
+                        className={`w-full px-3 py-2.5 pr-10 border rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none transition-colors ${data.confirm_password && data.new_password !== data.confirm_password
+                            ? 'border-red-300 bg-red-50'
+                            : data.confirm_password && data.new_password === data.confirm_password
+                                ? 'border-green-300'
+                                : 'border-gray-200'
+                            }`}
+                        placeholder="Ulangi password baru" />
+                    <button type="button" onClick={onToggleConfirm}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                </div>
+                {data.confirm_password && data.new_password !== data.confirm_password && (
+                    <p className="text-xs text-red-500 mt-1">Password tidak cocok</p>
+                )}
+                {data.confirm_password && data.new_password === data.confirm_password && (
+                    <p className="text-xs text-green-500 mt-1">✓ Password cocok</p>
+                )}
+            </div>
+        </div>
+    )
+}
+
+/* ─────────────────────────────────────────
+   MAIN COMPONENT
+───────────────────────────────────────── */
+export default function UsersClient({ usersData, currentUser }: UsersClientProps) {
+    const [usersList, setUsersList] = useState<Profile[]>(usersData)
+    const [searchQuery, setSearchQuery] = useState('')
+
+    // Modals
+    const [showAddModal, setShowAddModal] = useState(false)
+    const [showEditModal, setShowEditModal] = useState(false)
+    const [showDeleteModal, setShowDeleteModal] = useState(false)
+    const [showDetailModal, setShowDetailModal] = useState(false)
+    const [showResetPwModal, setShowResetPwModal] = useState(false)
+    const [notif, setNotif] = useState<{ show: boolean; success: boolean; message: string }>({
+        show: false, success: true, message: ''
+    })
+
+    const [selected, setSelected] = useState<Profile | null>(null)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
+    const [isResettingPw, setIsResettingPw] = useState(false)
+    const [formError, setFormError] = useState('')
+    const [resetPwError, setResetPwError] = useState('')
+
+    const [form, setForm] = useState<FormData>({ ...EMPTY_FORM })
+    const [resetPwData, setResetPwData] = useState<ResetPwData>({ new_password: '', confirm_password: '' })
+
+    // Password visibility
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPw, setShowConfirmPw] = useState(false)
+    const [showNewPw, setShowNewPw] = useState(false)
+    const [showConfirmReset, setShowConfirmReset] = useState(false)
+
+    const supabase = createClient()
+
+    /* ── filtered list ── */
+    const filtered = useMemo(() => {
+        const q = searchQuery.toLowerCase()
+        return usersList.filter(u =>
+            u.nama_lengkap.toLowerCase().includes(q) ||
+            u.username.toLowerCase().includes(q) ||
+            u.email.toLowerCase().includes(q)
+        )
+    }, [usersList, searchQuery])
+
+    const stats = useMemo(() => ({
+        total: usersList.length,
+        admin: usersList.filter(u => u.role === 'admin').length,
+        guru: usersList.filter(u => u.role === 'guru').length,
+    }), [usersList])
+
+    /* ── helpers ── */
+    const handleFormChange = (key: keyof FormData, val: string) =>
+        setForm(prev => ({ ...prev, [key]: val }))
+
+    const handleResetPwChange = (key: keyof ResetPwData, val: string) => {
+        setResetPwData(prev => ({ ...prev, [key]: val }))
+        if (resetPwError) setResetPwError('')
+    }
+
+    const showNotif = (success: boolean, message: string) =>
+        setNotif({ show: true, success, message })
+
+    const openAdd = () => {
+        setForm({ ...EMPTY_FORM })
+        setFormError('')
+        setShowPassword(false)
+        setShowConfirmPw(false)
+        setShowAddModal(true)
+    }
+
+    const openEdit = (u: Profile) => {
+        setSelected(u)
+        setForm({
+            username: u.username,
+            nama_lengkap: u.nama_lengkap,
+            email: u.email,
+            telepon: u.telepon ?? '',
+            role: u.role,
+            password: '',
+            confirm_password: '',
+        })
+        setFormError('')
+        setShowEditModal(true)
+    }
+
+    const openDelete = (u: Profile) => { setSelected(u); setShowDeleteModal(true) }
+    const openDetail = (u: Profile) => { setSelected(u); setShowDetailModal(true) }
+
+    const openResetPw = (u: Profile) => {
+        setSelected(u)
+        setResetPwData({ new_password: '', confirm_password: '' })
+        setResetPwError('')
+        setShowNewPw(false)
+        setShowConfirmReset(false)
+        setShowResetPwModal(true)
+    }
+
+    const validate = (isEdit = false): string => {
+        if (!form.nama_lengkap.trim()) return 'Nama lengkap wajib diisi'
+        if (!form.username.trim()) return 'Username wajib diisi'
+        if (!form.email.trim()) return 'Email wajib diisi'
+        if (!isEdit) {
+            if (!form.password) return 'Password wajib diisi'
+            if (form.password.length < 6) return 'Password minimal 6 karakter'
+            if (form.password !== form.confirm_password) return 'Konfirmasi password tidak cocok'
+        }
+        return ''
+    }
+
+    /* ── Add User ── */
+    const handleAdd = async () => {
+        const err = validate(false)
+        if (err) { setFormError(err); return }
+        setFormError('')
+        setIsSubmitting(true)
+
+        // Buat user via API route (karena perlu hash password)
+        const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: form.username.trim(),
+                nama_lengkap: form.nama_lengkap.trim(),
+                email: form.email.trim(),
+                telepon: form.telepon.trim() || null,
+                role: 'guru',  // selalu guru, tidak bisa pilih admin
+                password: form.password,
+            })
+        })
+
+        const result = await res.json()
+        if (!res.ok) {
+            setFormError(result.error || 'Gagal menambahkan user')
+            setIsSubmitting(false)
+            return
+        }
+
+        setUsersList(prev => [...prev, result.user])
+        setShowAddModal(false)
+        setIsSubmitting(false)
+        showNotif(true, `User "${result.user.nama_lengkap}" berhasil ditambahkan`)
+    }
+
+    /* ── Edit User ── */
+    const handleEdit = async () => {
+        if (!selected) return
+        const err = validate(true)
+        if (err) { setFormError(err); return }
+        setFormError('')
+        setIsSubmitting(true)
+
+        const { data, error } = await supabase
+            .from('profiles')
+            .update({
+                nama_lengkap: form.nama_lengkap.trim(),
+                email: form.email.trim(),
+                telepon: form.telepon.trim() || null,
+                // role tidak diubah — guru tetap guru
+            })
+            .eq('id', selected.id)
+            .select('id, username, nama_lengkap, email, telepon, role, foto_url, created_at, updated_at')
+            .single()
+
+        if (error) {
+            setFormError(
+                error.code === '23505' ? 'Email sudah digunakan' : 'Gagal: ' + error.message
+            )
+            setIsSubmitting(false)
+            return
+        }
+
+        setUsersList(prev => prev.map(u => u.id === selected.id ? data : u))
+        setShowEditModal(false)
+        setIsSubmitting(false)
+        showNotif(true, `Data "${data.nama_lengkap}" berhasil diperbarui`)
+    }
+
+    /* ── Delete User ── */
+    const handleDelete = async () => {
+        if (!selected) return
+        setIsDeleting(true)
+
+        const { error } = await supabase.from('profiles').delete().eq('id', selected.id)
+
+        if (error) {
+            setIsDeleting(false)
+            setShowDeleteModal(false)
+            showNotif(false, 'Gagal menghapus user: ' + error.message)
+            return
+        }
+
+        const nama = selected.nama_lengkap
+        setUsersList(prev => prev.filter(u => u.id !== selected.id))
+        setShowDeleteModal(false)
+        setIsDeleting(false)
+        showNotif(true, `User "${nama}" berhasil dihapus`)
+    }
+
+    /* ── Reset Password ── */
+    const handleResetPassword = async () => {
+        if (!selected) return
+        if (!resetPwData.new_password) { setResetPwError('Password baru wajib diisi'); return }
+        if (resetPwData.new_password.length < 6) { setResetPwError('Password minimal 6 karakter'); return }
+        if (resetPwData.new_password !== resetPwData.confirm_password) {
+            setResetPwError('Konfirmasi password tidak cocok'); return
+        }
+
+        setResetPwError('')
+        setIsResettingPw(true)
+
+        const { error } = await supabase.rpc('update_user_password', {
+            p_user_id: selected.id,
+            p_new_password: resetPwData.new_password,
+        })
+
+        if (error) {
+            setResetPwError('Gagal reset password: ' + error.message)
+            setIsResettingPw(false)
+            return
+        }
+
+        setShowResetPwModal(false)
+        setIsResettingPw(false)
+        showNotif(true, `Password "${selected.nama_lengkap}" berhasil direset`)
+    }
+
+    /* ── render ── */
+    return (
+        <div className="px-4 py-6 space-y-5">
+
+            {/* Header */}
+            <div>
+                <h1 className="text-xl font-bold text-gray-900">Manajemen User</h1>
+                <p className="text-sm text-gray-500 mt-0.5">Kelola akun guru dan admin</p>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-2">
+                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-3 text-white">
+                    <Users className="w-6 h-6 opacity-80 mb-1" />
+                    <p className="text-xl font-bold">{stats.total}</p>
+                    <p className="text-[10px] opacity-80">Total User</p>
+                </div>
+                <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-3 text-white">
+                    <ShieldCheck className="w-6 h-6 opacity-80 mb-1" />
+                    <p className="text-xl font-bold">{stats.admin}</p>
+                    <p className="text-[10px] opacity-80">Admin</p>
+                </div>
+                <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-3 text-white">
+                    <User className="w-6 h-6 opacity-80 mb-1" />
+                    <p className="text-xl font-bold">{stats.guru}</p>
+                    <p className="text-[10px] opacity-80">Guru</p>
+                </div>
+            </div>
+
+            {/* Search + Filter */}
+            <div className="space-y-2">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input type="text" value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        placeholder="Cari nama, username, atau email..."
+                        className="w-full pl-9 pr-9 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none" />
+                    {searchQuery && (
+                        <button onClick={() => setSearchQuery('')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <X className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
+
+            </div>
+
+            {/* Add Button */}
+            <button onClick={openAdd}
+                className="w-full py-3 bg-accent text-white rounded-xl font-medium hover:bg-accent/90 transition-colors flex items-center justify-center gap-2 text-sm">
+                <Plus className="w-4 h-4" /> Tambah User Baru
+            </button>
+
+            {/* List */}
+            <div className="space-y-3">
+                <p className="text-sm font-bold text-gray-900">Daftar User ({filtered.length})</p>
+
+                {filtered.length === 0 ? (
+                    <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
+                        <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-500 text-sm">Tidak ada user ditemukan</p>
+                    </div>
+                ) : filtered.map(u => {
+                    const initial = u.nama_lengkap.charAt(0).toUpperCase()
+
+                    return (
+                        <div key={u.id} className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+                            <div className="flex items-start gap-3">
+                                {/* Avatar */}
+                                {u.foto_url ? (
+                                    <img src={u.foto_url} alt={u.nama_lengkap}
+                                        className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-gray-100" />
+                                ) : (
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${u.role === 'admin' ? 'bg-purple-500' : 'bg-primary'
+                                        }`}>
+                                        {initial}
+                                    </div>
+                                )}
+
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <button onClick={() => openDetail(u)}
+                                            className="font-semibold text-gray-900 text-sm hover:text-accent transition-colors text-left">
+                                            {u.id === currentUser.id
+                                                ? <>{u.nama_lengkap} <span className="text-accent font-semibold">(Anda)</span></>
+                                                : u.nama_lengkap
+                                            }
+                                        </button>
+                                    </div>
+                                    <p className="text-xs text-gray-500 font-mono mt-0.5">@{u.username}</p>
+                                    <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                        <span className={`text-xs px-2 py-0.5 rounded font-semibold ${u.role === 'admin'
+                                            ? 'bg-purple-100 text-purple-700'
+                                            : 'bg-blue-100 text-blue-700'
+                                            }`}>
+                                            {u.role === 'admin' ? '⚡ Admin' : '📚 Guru'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Actions — disabled semua untuk akun admin */}
+                            {u.role !== 'admin' && (
+                                <div className="flex gap-2">
+                                    <button onClick={() => openEdit(u)}
+                                        className="flex-1 py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-100 transition-colors flex items-center justify-center gap-1">
+                                        <Edit2 className="w-3.5 h-3.5" /> Edit
+                                    </button>
+                                    <button onClick={() => openResetPw(u)}
+                                        className="flex-1 py-2 bg-amber-50 text-amber-600 rounded-lg text-xs font-medium hover:bg-amber-100 transition-colors flex items-center justify-center gap-1">
+                                        <KeyRound className="w-3.5 h-3.5" /> Reset PW
+                                    </button>
+                                    <button onClick={() => openDelete(u)}
+                                        className="flex-1 py-2 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100 transition-colors flex items-center justify-center gap-1">
+                                        <Trash2 className="w-3.5 h-3.5" /> Hapus
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )
+                })}
+            </div>
+
+            {/* ════ MODALS ════ */}
+
+            {/* Add */}
+            <Modal isOpen={showAddModal}
+                onClose={() => { if (!isSubmitting) { setShowAddModal(false); setFormError('') } }}
+                title="Tambah User Baru"
+                confirmation={{
+                    negativeBtn: 'Batal', positiveBtn: 'Simpan',
+                    handlePositiveBtn: handleAdd,
+                    loading: { text: 'Menyimpan...', isLoading: isSubmitting, setIsLoading: setIsSubmitting }
+                }}>
+                <UserFormFields
+                    form={form} formError={formError} disabled={isSubmitting} isEdit={false}
+                    showPassword={showPassword} showConfirm={showConfirmPw}
+                    onTogglePassword={() => setShowPassword(p => !p)}
+                    onToggleConfirm={() => setShowConfirmPw(p => !p)}
+                    onChange={handleFormChange}
+                />
+            </Modal>
+
+            {/* Edit */}
+            <Modal isOpen={showEditModal}
+                onClose={() => { if (!isSubmitting) { setShowEditModal(false); setFormError('') } }}
+                title="Edit User"
+                confirmation={{
+                    negativeBtn: 'Batal', positiveBtn: 'Simpan Perubahan',
+                    handlePositiveBtn: handleEdit,
+                    loading: { text: 'Menyimpan...', isLoading: isSubmitting, setIsLoading: setIsSubmitting }
+                }}>
+                <UserFormFields
+                    form={form} formError={formError} disabled={isSubmitting} isEdit={true}
+                    showPassword={false} showConfirm={false}
+                    onTogglePassword={() => { }} onToggleConfirm={() => { }}
+                    onChange={handleFormChange}
+                />
+            </Modal>
+
+            {/* Delete */}
+            <Modal isOpen={showDeleteModal}
+                onClose={() => !isDeleting && setShowDeleteModal(false)}
+                title="Konfirmasi Hapus"
+                confirmation={{
+                    negativeBtn: 'Batal', positiveBtn: 'Ya, Hapus',
+                    handlePositiveBtn: handleDelete,
+                    loading: { text: 'Menghapus...', isLoading: isDeleting, setIsLoading: setIsDeleting }
+                }}>
+                <p className="text-sm text-gray-600">
+                    Apakah Anda yakin ingin menghapus user{' '}
+                    <strong className="text-gray-900">{selected?.nama_lengkap}</strong>{' '}
+                    <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">
+                        (@{selected?.username})
+                    </span>? Tindakan ini tidak dapat dibatalkan.
+                </p>
+            </Modal>
+
+            {/* Reset Password */}
+            <Modal isOpen={showResetPwModal}
+                onClose={() => { if (!isResettingPw) { setShowResetPwModal(false); setResetPwError('') } }}
+                title={`Reset Password`}
+                confirmation={{
+                    negativeBtn: 'Batal', positiveBtn: 'Reset Password',
+                    handlePositiveBtn: handleResetPassword,
+                    loading: { text: 'Mereset...', isLoading: isResettingPw, setIsLoading: setIsResettingPw }
+                }}>
+                <div className="space-y-3">
+                    {/* Info user */}
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 flex items-center gap-2">
+                        <KeyRound className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                        <div>
+                            <p className="text-xs font-semibold text-amber-800">{selected?.nama_lengkap}</p>
+                            <p className="text-xs text-amber-600 font-mono">@{selected?.username}</p>
+                        </div>
+                    </div>
+                    <ResetPasswordFields
+                        data={resetPwData} error={resetPwError} disabled={isResettingPw}
+                        showNew={showNewPw} showConfirm={showConfirmReset}
+                        onToggleNew={() => setShowNewPw(p => !p)}
+                        onToggleConfirm={() => setShowConfirmReset(p => !p)}
+                        onChange={handleResetPwChange}
+                    />
+                </div>
+            </Modal>
+
+            {/* Detail */}
+            <Modal isOpen={showDetailModal}
+                onClose={() => setShowDetailModal(false)}
+                title="Detail User">
+                {selected && (
+                    <div className="space-y-4">
+                        {/* Hero */}
+                        <div className={`rounded-xl p-4 flex items-center gap-3 ${selected.role === 'admin' ? 'bg-purple-50' : 'bg-blue-50'
+                            }`}>
+                            {selected.foto_url ? (
+                                <img src={selected.foto_url} alt={selected.nama_lengkap}
+                                    className="w-14 h-14 rounded-full object-cover border-2 border-white shadow flex-shrink-0" />
+                            ) : (
+                                <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-xl flex-shrink-0 ${selected.role === 'admin' ? 'bg-purple-500' : 'bg-primary'
+                                    }`}>
+                                    {selected.nama_lengkap.charAt(0).toUpperCase()}
+                                </div>
+                            )}
+                            <div>
+                                <p className="font-bold text-gray-900">{selected.nama_lengkap}</p>
+                                <p className="text-xs text-gray-500 font-mono">@{selected.username}</p>
+                                <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded font-semibold ${selected.role === 'admin'
+                                    ? 'bg-purple-100 text-purple-700'
+                                    : 'bg-blue-100 text-blue-700'
+                                    }`}>
+                                    {selected.role === 'admin' ? '⚡ Administrator' : '📚 Guru'}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Info rows */}
+                        {[
+                            { label: 'Email', value: selected.email },
+                            { label: 'Telepon', value: selected.telepon },
+                            {
+                                label: 'Bergabung', value: new Date(selected.created_at).toLocaleDateString('id-ID', {
+                                    day: 'numeric', month: 'long', year: 'numeric'
+                                })
+                            },
+                            {
+                                label: 'Diperbarui', value: new Date(selected.updated_at).toLocaleDateString('id-ID', {
+                                    day: 'numeric', month: 'long', year: 'numeric'
+                                })
+                            },
+                        ].filter(r => r.value).map(row => (
+                            <div key={row.label} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                                <span className="text-xs text-gray-500">{row.label}</span>
+                                <span className="text-sm font-medium text-gray-900 text-right">{row.value}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </Modal>
+
+            {/* Notifikasi */}
+            <Modal isOpen={notif.show}
+                onClose={() => setNotif(n => ({ ...n, show: false }))}
+                title={notif.success ? 'Berhasil' : 'Gagal'}>
+                <div className="flex flex-col items-center py-2 gap-3">
+                    {notif.success
+                        ? <CheckCircle2 className="w-14 h-14 text-green-500" />
+                        : <XCircle className="w-14 h-14 text-red-500" />
+                    }
+                    <p className="text-sm text-gray-700 text-center">{notif.message}</p>
+                </div>
+            </Modal>
+
+        </div>
+    )
+}

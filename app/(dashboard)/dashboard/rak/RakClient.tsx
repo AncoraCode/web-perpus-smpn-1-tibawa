@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import {
     Search, Plus, Edit2, Trash2,
-    Grid3x3, MapPin, CheckCircle2, XCircle, Package,
+    Grid3x3, MapPin, CheckCircle2, XCircle, Package, X,
 } from 'lucide-react'
 import Modal from '@/app/components/Modal'
 import { createClient } from '@/utils/supabase/client'
@@ -127,23 +127,23 @@ function RakFormFields({ form, formError, disabled, onChange }: FormFieldsProps)
    MAIN COMPONENT
 ───────────────────────────────────────── */
 export default function RakClient({ rakData, user }: RakClientProps) {
-    const [rakList, setRakList]           = useState<Rak[]>(rakData)
-    const [searchQuery, setSearchQuery]   = useState('')
+    const [rakList, setRakList] = useState<Rak[]>(rakData)
+    const [searchQuery, setSearchQuery] = useState('')
 
     // Modals
-    const [showAddModal,    setShowAddModal]    = useState(false)
-    const [showEditModal,   setShowEditModal]   = useState(false)
+    const [showAddModal, setShowAddModal] = useState(false)
+    const [showEditModal, setShowEditModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [showDetailModal, setShowDetailModal] = useState(false)
     const [notif, setNotif] = useState<{ show: boolean; success: boolean; message: string }>({
         show: false, success: true, message: ''
     })
 
-    const [selected,     setSelected]     = useState<Rak | null>(null)
+    const [selected, setSelected] = useState<Rak | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [isDeleting,   setIsDeleting]   = useState(false)
-    const [formError,    setFormError]    = useState('')
-    const [form,         setForm]         = useState<FormData>({ ...EMPTY_FORM })
+    const [isDeleting, setIsDeleting] = useState(false)
+    const [formError, setFormError] = useState('')
+    const [form, setForm] = useState<FormData>({ ...EMPTY_FORM })
 
     const supabase = createClient()
 
@@ -173,9 +173,9 @@ export default function RakClient({ rakData, user }: RakClientProps) {
     const openEdit = (r: Rak) => {
         setSelected(r)
         setForm({
-            kode_rak:  r.kode_rak,
-            nama_rak:  r.nama_rak,
-            lokasi:    r.lokasi    ?? '',
+            kode_rak: r.kode_rak,
+            nama_rak: r.nama_rak,
+            lokasi: r.lokasi ?? '',
             deskripsi: r.deskripsi ?? '',
         })
         setFormError('')
@@ -187,9 +187,9 @@ export default function RakClient({ rakData, user }: RakClientProps) {
 
     /* ── build payload ── */
     const buildPayload = () => ({
-        kode_rak:  form.kode_rak.trim().toUpperCase(),
-        nama_rak:  form.nama_rak.trim(),
-        lokasi:    form.lokasi.trim()    || null,
+        kode_rak: form.kode_rak.trim().toUpperCase(),
+        nama_rak: form.nama_rak.trim(),
+        lokasi: form.lokasi.trim() || null,
         deskripsi: form.deskripsi.trim() || null,
     })
 
@@ -249,7 +249,7 @@ export default function RakClient({ rakData, user }: RakClientProps) {
 
         setRakList(prev =>
             prev.map(r => r.id === selected.id ? data : r)
-               .sort((a, b) => a.kode_rak.localeCompare(b.kode_rak))
+                .sort((a, b) => a.kode_rak.localeCompare(b.kode_rak))
         )
         setShowEditModal(false)
         setIsSubmitting(false)
@@ -292,7 +292,7 @@ export default function RakClient({ rakData, user }: RakClientProps) {
             </div>
 
             {/* Stats */}
-            <div className="bg-gradient-to-br from-primary to-accent rounded-2xl p-4 text-white flex items-center justify-between">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white flex items-center justify-between">
                 <div>
                     <p className="text-3xl font-bold">{rakList.length}</p>
                     <p className="text-xs opacity-80 mt-0.5">Total Rak Terdaftar</p>
@@ -308,8 +308,14 @@ export default function RakClient({ rakData, user }: RakClientProps) {
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder="Cari kode, nama, atau lokasi..."
-                    className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none"
+                    className="w-full pl-9 pr-9 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none"
                 />
+                {searchQuery && (
+                    <button onClick={() => setSearchQuery('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <X className="w-4 h-4" />
+                    </button>
+                )}
             </div>
 
             {/* Add Button */}
@@ -339,8 +345,8 @@ export default function RakClient({ rakData, user }: RakClientProps) {
                         {/* Info */}
                         <div className="flex items-start gap-3">
                             {/* Icon */}
-                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                <Grid3x3 className="w-5 h-5 text-primary" />
+                            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+                                <Grid3x3 className="w-5 h-5 text-accent" />
                             </div>
 
                             <div className="flex-1 min-w-0">
@@ -351,7 +357,7 @@ export default function RakClient({ rakData, user }: RakClientProps) {
                                     {r.nama_rak}
                                 </button>
                                 <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                                    <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded font-semibold">
+                                    <span className="text-xs font-mono bg-accent/10 text-accent px-2 py-0.5 rounded font-semibold">
                                         {r.kode_rak}
                                     </span>
                                     {r.lokasi && (
@@ -461,13 +467,13 @@ export default function RakClient({ rakData, user }: RakClientProps) {
                 {selected && (
                     <div className="space-y-4">
                         {/* Hero */}
-                        <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 flex items-center gap-4">
-                            <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                <Grid3x3 className="w-7 h-7 text-primary" />
+                        <div className="bg-accent/5 border border-accent/10 rounded-xl p-4 flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+                                <Grid3x3 className="w-7 h-7 text-accent" />
                             </div>
                             <div>
                                 <p className="font-bold text-gray-900 text-base">{selected.nama_rak}</p>
-                                <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded font-semibold">
+                                <span className="text-xs font-mono bg-accent/10 text-accent px-2 py-0.5 rounded font-semibold">
                                     {selected.kode_rak}
                                 </span>
                             </div>
@@ -477,10 +483,12 @@ export default function RakClient({ rakData, user }: RakClientProps) {
                         {[
                             { label: 'Kode Rak', value: selected.kode_rak, mono: true },
                             { label: 'Nama Rak', value: selected.nama_rak },
-                            { label: 'Lokasi',   value: selected.lokasi },
-                            { label: 'Dibuat',   value: new Date(selected.created_at).toLocaleDateString('id-ID', {
-                                day: 'numeric', month: 'long', year: 'numeric'
-                            }) },
+                            { label: 'Lokasi', value: selected.lokasi },
+                            {
+                                label: 'Dibuat', value: new Date(selected.created_at).toLocaleDateString('id-ID', {
+                                    day: 'numeric', month: 'long', year: 'numeric'
+                                })
+                            },
                         ].filter(r => r.value).map(row => (
                             <div key={row.label} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
                                 <span className="text-xs text-gray-500">{row.label}</span>
