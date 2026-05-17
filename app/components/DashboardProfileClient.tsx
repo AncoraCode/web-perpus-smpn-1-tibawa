@@ -11,6 +11,13 @@ import { createClient } from '@/utils/supabase/client'
 import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
 
+// Override ReactCrop agar tidak ada background putih di luar area gambar
+const cropStyles = `
+  .ReactCrop { background: transparent !important; }
+  .ReactCrop__child-wrapper { display: block; line-height: 0; }
+  .ReactCrop__crop-selection { box-shadow: 0 0 0 9999em rgba(0,0,0,0.55) !important; }
+`
+
 /* ─────────────────────────────────────────
    TYPES
 ───────────────────────────────────────── */
@@ -35,34 +42,39 @@ function centerAspectCrop(mediaWidth: number, mediaHeight: number): Crop {
     )
 }
 
-// Canvas crop → Blob
+// Canvas crop → Blob (fix: pakai devicePixelRatio + correct scale)
 async function getCroppedBlob(
     image: HTMLImageElement,
     crop: PixelCrop,
-    fileName: string
 ): Promise<Blob> {
     const canvas = document.createElement('canvas')
-    const scaleX  = image.naturalWidth  / image.width
-    const scaleY  = image.naturalHeight / image.height
-    const size    = 400 // output 400x400px
+    const OUTPUT = 400 // output 400x400px
 
-    canvas.width  = size
-    canvas.height = size
+    // Scale dari rendered size ke natural size
+    const scaleX = image.naturalWidth / image.width
+    const scaleY = image.naturalHeight / image.height
+
+    canvas.width = OUTPUT
+    canvas.height = OUTPUT
 
     const ctx = canvas.getContext('2d')!
+    ctx.imageSmoothingEnabled = true
     ctx.imageSmoothingQuality = 'high'
+
     ctx.drawImage(
         image,
-        crop.x * scaleX, crop.y * scaleY,
-        crop.width * scaleX, crop.height * scaleY,
-        0, 0, size, size
+        Math.floor(crop.x * scaleX),
+        Math.floor(crop.y * scaleY),
+        Math.floor(crop.width * scaleX),
+        Math.floor(crop.height * scaleY),
+        0, 0, OUTPUT, OUTPUT
     )
 
     return new Promise((resolve, reject) => {
-        canvas.toBlob(blob => {
-            if (blob) resolve(blob)
-            else reject(new Error('Canvas empty'))
-        }, 'image/jpeg', 0.92)
+        canvas.toBlob(
+            blob => { if (blob) resolve(blob); else reject(new Error('Canvas kosong')) },
+            'image/jpeg', 0.95
+        )
     })
 }
 
@@ -87,8 +99,8 @@ function PasswordFields({ data, error, disabled, showOld, showNew, showConfirm, 
                 </div>
             )}
             {[
-                { key: 'old_password',     label: 'Password Lama',            show: showOld,     toggle: onToggleOld,     ph: 'Masukkan password lama' },
-                { key: 'new_password',     label: 'Password Baru',            show: showNew,     toggle: onToggleNew,     ph: 'Min. 6 karakter' },
+                { key: 'old_password', label: 'Password Lama', show: showOld, toggle: onToggleOld, ph: 'Masukkan password lama' },
+                { key: 'new_password', label: 'Password Baru', show: showNew, toggle: onToggleNew, ph: 'Min. 6 karakter' },
                 { key: 'confirm_password', label: 'Konfirmasi Password Baru', show: showConfirm, toggle: onToggleConfirm, ph: 'Ulangi password baru' },
             ].map(field => (
                 <div key={field.key}>
@@ -100,11 +112,10 @@ function PasswordFields({ data, error, disabled, showOld, showNew, showConfirm, 
                             type={field.show ? 'text' : 'password'}
                             value={(data as any)[field.key]} disabled={disabled}
                             onChange={e => onChange(field.key, e.target.value)}
-                            className={`w-full px-3 py-2.5 pr-10 border rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none transition-colors ${
-                                field.key === 'confirm_password' && data.confirm_password
+                            className={`w-full px-3 py-2.5 pr-10 border rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none transition-colors ${field.key === 'confirm_password' && data.confirm_password
                                     ? data.new_password === data.confirm_password ? 'border-green-300' : 'border-red-300 bg-red-50'
                                     : 'border-gray-200'
-                            }`}
+                                }`}
                             placeholder={field.ph}
                         />
                         <button type="button" onClick={field.toggle} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -113,12 +124,11 @@ function PasswordFields({ data, error, disabled, showOld, showNew, showConfirm, 
                     </div>
                     {field.key === 'new_password' && data.new_password && (
                         <div className="flex items-center gap-1 mt-1.5">
-                            {[1,2,3].map(i => (
-                                <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${
-                                    data.new_password.length >= i * 3
-                                        ? i===1 ? 'bg-red-400' : i===2 ? 'bg-amber-400' : 'bg-green-400'
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${data.new_password.length >= i * 3
+                                        ? i === 1 ? 'bg-red-400' : i === 2 ? 'bg-amber-400' : 'bg-green-400'
                                         : 'bg-gray-200'
-                                }`} />
+                                    }`} />
                             ))}
                             <span className="text-xs text-gray-400 ml-1 flex-shrink-0">
                                 {data.new_password.length < 3 ? 'Lemah' : data.new_password.length < 6 ? 'Sedang' : 'Kuat'}
@@ -140,25 +150,25 @@ function PasswordFields({ data, error, disabled, showOld, showNew, showConfirm, 
    MAIN COMPONENT
 ───────────────────────────────────────── */
 export default function DashboardProfileClient({ user }: { user: ProfileUser }) {
-    const router   = useRouter()
+    const router = useRouter()
     const supabase = createClient()
     const fileInputRef = useRef<HTMLInputElement>(null)
-    const imgRef       = useRef<HTMLImageElement>(null)
+    const imgRef = useRef<HTMLImageElement>(null)
 
-    const [isEditing,        setIsEditing]        = useState(false)
-    const [isSaving,         setIsSaving]         = useState(false)
-    const [isChangingPw,     setIsChangingPw]     = useState(false)
+    const [isEditing, setIsEditing] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
+    const [isChangingPw, setIsChangingPw] = useState(false)
     const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
 
     const [fotoUrl, setFotoUrl] = useState<string | null>(user.foto_url)
 
     // Crop modal state
-    const [showCropModal,       setShowCropModal]       = useState(false)
-    const [showDeletePhotoModal,setShowDeletePhotoModal] = useState(false)
-    const [rawImageSrc,         setRawImageSrc]         = useState<string>('')
-    const [rawFileName,         setRawFileName]         = useState<string>('')
-    const [crop,                setCrop]                = useState<Crop>()
-    const [completedCrop,       setCompletedCrop]       = useState<PixelCrop>()
+    const [showPhotoPreview, setShowPhotoPreview] = useState(false)
+    const [showCropModal, setShowCropModal] = useState(false)
+    const [showDeletePhotoModal, setShowDeletePhotoModal] = useState(false)
+    const [rawImageSrc, setRawImageSrc] = useState<string>('')
+    const [crop, setCrop] = useState<Crop>()
+    const [completedCrop, setCompletedCrop] = useState<PixelCrop>()
 
     const [showPasswordModal, setShowPasswordModal] = useState(false)
     const [notif, setNotif] = useState<{ show: boolean; success: boolean; message: string }>({
@@ -168,16 +178,16 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
     // Profile form
     const [profileForm, setProfileForm] = useState({
         nama_lengkap: user.nama_lengkap,
-        email:        user.email   ?? '',
-        telepon:      user.telepon ?? '',
+        email: user.email ?? '',
+        telepon: user.telepon ?? '',
     })
     const [profileError, setProfileError] = useState('')
 
     // Password form
-    const [pwForm,      setPwForm]      = useState({ old_password: '', new_password: '', confirm_password: '' })
-    const [pwError,     setPwError]     = useState('')
-    const [showOld,     setShowOld]     = useState(false)
-    const [showNew,     setShowNew]     = useState(false)
+    const [pwForm, setPwForm] = useState({ old_password: '', new_password: '', confirm_password: '' })
+    const [pwError, setPwError] = useState('')
+    const [showOld, setShowOld] = useState(false)
+    const [showNew, setShowNew] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false)
 
     const showNotif = (success: boolean, message: string) =>
@@ -206,7 +216,6 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
         const reader = new FileReader()
         reader.onload = () => {
             setRawImageSrc(reader.result as string)
-            setRawFileName(file.name)
             setCrop(undefined)
             setCompletedCrop(undefined)
             setShowCropModal(true)
@@ -234,7 +243,7 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
 
         try {
             // Crop → blob
-            const blob = await getCroppedBlob(imgRef.current, completedCrop, rawFileName)
+            const blob = await getCroppedBlob(imgRef.current, completedCrop)
 
             // Hapus foto lama
             if (fotoUrl) {
@@ -243,7 +252,7 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
             }
 
             // Upload
-            const ext      = 'jpg'
+            const ext = 'jpg'
             const filePath = `${user.id}/avatar_${Date.now()}.${ext}`
 
             const { error: uploadError } = await supabase.storage
@@ -278,9 +287,9 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     nama_lengkap: profileForm.nama_lengkap,
-                    email:        profileForm.email   || null,
-                    telepon:      profileForm.telepon || null,
-                    foto_url:     publicUrl,
+                    email: profileForm.email || null,
+                    telepon: profileForm.telepon || null,
+                    foto_url: publicUrl,
                 })
             })
 
@@ -314,9 +323,9 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     nama_lengkap: profileForm.nama_lengkap,
-                    email:        profileForm.email   || null,
-                    telepon:      profileForm.telepon || null,
-                    foto_url:     null,
+                    email: profileForm.email || null,
+                    telepon: profileForm.telepon || null,
+                    foto_url: null,
                 })
             })
 
@@ -342,8 +351,8 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 nama_lengkap: profileForm.nama_lengkap.trim(),
-                email:        profileForm.email.trim()   || null,
-                telepon:      profileForm.telepon.trim() || null,
+                email: profileForm.email.trim() || null,
+                telepon: profileForm.telepon.trim() || null,
             })
         })
 
@@ -415,9 +424,10 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
                 <div className="relative">
                     {fotoUrl ? (
                         <img src={fotoUrl} alt={user.nama_lengkap}
-                            className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg" />
+                            onClick={() => setShowPhotoPreview(true)}
+                            className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg cursor-pointer hover:opacity-90 transition-opacity" />
                     ) : (
-                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-3xl font-bold shadow-lg border-4 border-white">
+                        <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white text-3xl font-bold shadow-lg border-4 border-white">
                             {initial}
                         </div>
                     )}
@@ -438,9 +448,8 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
 
                 <h2 className="text-lg font-bold text-gray-900 mt-3">{user.nama_lengkap}</h2>
                 <p className="text-sm text-gray-500">@{user.username}</p>
-                <span className={`mt-2 text-xs px-3 py-1 rounded-full font-semibold ${
-                    user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
-                }`}>
+                <span className={`mt-2 text-xs px-3 py-1 rounded-full font-semibold ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                    }`}>
                     {user.role === 'admin' ? '⚡ Administrator' : '📚 Guru'}
                 </span>
 
@@ -543,6 +552,39 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
 
             {/* ════ MODALS ════ */}
 
+            {/* ── Photo Preview Modal ── */}
+            <Modal
+                isOpen={showPhotoPreview}
+                onClose={() => setShowPhotoPreview(false)}
+                title="Foto Profil"
+            >
+                <div className="flex flex-col items-center gap-4">
+                    <img
+                        src={fotoUrl ?? ''}
+                        alt={user.nama_lengkap}
+                        className="w-64 h-64 rounded-full object-cover shadow-xl border-4 border-gray-100"
+                    />
+                    <div className="text-center">
+                        <p className="font-bold text-gray-900">{user.nama_lengkap}</p>
+                        <p className="text-sm text-gray-500">@{user.username}</p>
+                    </div>
+                    <div className="flex gap-2 w-full">
+                        <button
+                            onClick={() => { setShowPhotoPreview(false); setTimeout(() => fileInputRef.current?.click(), 100) }}
+                            className="flex-1 py-2.5 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent/90 transition-colors flex items-center justify-center gap-1.5"
+                        >
+                            <Camera className="w-4 h-4" /> Ganti Foto
+                        </button>
+                        <button
+                            onClick={() => { setShowPhotoPreview(false); setTimeout(() => setShowDeletePhotoModal(true), 100) }}
+                            className="flex-1 py-2.5 bg-red-50 text-red-600 rounded-xl text-sm font-medium hover:bg-red-100 transition-colors flex items-center justify-center gap-1.5"
+                        >
+                            <Trash2 className="w-4 h-4" /> Hapus
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
             {/* ── Crop Modal ── */}
             <Modal
                 isOpen={showCropModal}
@@ -559,7 +601,9 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
                     <p className="text-xs text-gray-500 text-center">
                         Geser dan resize area crop. Hasil akhir akan berupa foto persegi (1:1).
                     </p>
-                    <div className="flex justify-center bg-gray-50 rounded-xl overflow-hidden p-2">
+                    <style>{cropStyles}</style>
+                    {/* Container tanpa padding/bg agar crop area pas dengan gambar */}
+                    <div className="flex justify-center overflow-hidden rounded-xl">
                         {rawImageSrc && (
                             <ReactCrop
                                 crop={crop}
@@ -568,20 +612,27 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
                                 aspect={1}
                                 circularCrop
                                 keepSelection
-                                className="max-h-72 w-full object-contain"
+                                minWidth={50}
+                                minHeight={50}
+                                style={{ maxHeight: '300px' }}
                             >
+                                {/* style block agar tidak ada whitespace di luar gambar */}
                                 <img
                                     ref={imgRef}
                                     src={rawImageSrc}
                                     alt="Crop preview"
                                     onLoad={onImageLoad}
-                                    className="max-h-72 w-full object-contain"
+                                    style={{
+                                        maxHeight: '300px',
+                                        maxWidth: '100%',
+                                        display: 'block',  // hilangkan inline whitespace
+                                    }}
                                 />
                             </ReactCrop>
                         )}
                     </div>
                     <p className="text-xs text-gray-400 text-center">
-                        💡 Lingkaran crop hanya preview — hasil akhir berbentuk lingkaran di profil
+                        💡 Geser & resize lingkaran · Hasil akhir foto berbentuk lingkaran
                     </p>
                 </div>
             </Modal>
