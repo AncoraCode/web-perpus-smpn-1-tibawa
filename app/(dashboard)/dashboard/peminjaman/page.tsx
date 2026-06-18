@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { Suspense } from 'react'
 import { getUserFromCookie } from '@/utils/get-user'
 import { createClient } from '@/utils/supabase/server'
 import PeminjamanClient from './PeminjamanClient'
@@ -53,11 +54,13 @@ export default async function PeminjamanPage() {
     const { peminjaman, siswaList, bukuList } = await getPeminjamanPageData()
 
     return (
-        <PeminjamanClient
-            peminjamanData={peminjaman}
-            siswaList={siswaList}
-            bukuList={bukuList}
-            user={user}
-        />
+        <Suspense fallback={<div className="px-4 py-6 text-center text-gray-400 text-sm">Memuat...</div>}>
+            <PeminjamanClient
+                peminjamanData={peminjaman}
+                siswaList={siswaList}
+                bukuList={bukuList}
+                user={user}
+            />
+        </Suspense>
     )
 }

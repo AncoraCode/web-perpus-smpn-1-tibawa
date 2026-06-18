@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import {
     Search, Plus, BookMarked, CheckCircle2, XCircle,
     Clock, AlertTriangle, BookOpen, User, X,
-    CalendarDays, RotateCcw, ChevronDown, Filter, FileText, Trash2,
+    CalendarDays, RotateCcw, ChevronDown, Filter, FileText,
+    Trash2,
 } from 'lucide-react'
 import Modal from '@/app/components/Modal'
 import { createClient } from '@/utils/supabase/client'
@@ -317,6 +319,9 @@ function PeminjamanFormFields({ form, formError, disabled, siswaOptions, bukuOpt
 export default function PeminjamanClient({
     peminjamanData, siswaList, bukuList, user
 }: PeminjamanClientProps) {
+    const searchParams = useSearchParams()
+    const router        = useRouter()
+
     const [list, setList]             = useState<Peminjaman[]>(peminjamanData)
     const [searchQuery, setSearch]    = useState('')
     const [filterStatus, setFilter]   = useState('')
@@ -353,6 +358,29 @@ export default function PeminjamanClient({
     })
 
     const supabase = createClient()
+
+    /* ── Auto-buka form tambah jika ada query param ?nis=xxx (dari scan QR) ── */
+    useEffect(() => {
+        const nisParam = searchParams.get('nis')
+        if (!nisParam) return
+
+        const matchedSiswa = siswaList.find(s => s.nis === nisParam)
+        if (matchedSiswa) {
+            setForm({
+                siswa_id: matchedSiswa.id,
+                buku_id: '',
+                jumlah: '1',
+                tanggal_pinjam: today(),
+                tanggal_jatuh_tempo: addDays(today(), 1),
+                catatan: '',
+            })
+            setFormError('')
+            setShowAddModal(true)
+
+            // Bersihkan query param dari URL tanpa reload halaman
+            router.replace('/dashboard/peminjaman')
+        }
+    }, [searchParams, siswaList, router])
 
     /* ── options untuk SearchableSelect ── */
     const siswaOptions = useMemo(() =>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, BookMarked, QrCode, History, Menu, Users, BookOpen, Grid3x3, Layers, School } from 'lucide-react'
+import { Home, BookMarked, QrCode, History, Menu, Users, BookOpen, Grid3x3, Layers, School, CreditCard } from 'lucide-react'
 import { useState } from 'react'
 
 const mainNavItems = [
@@ -16,6 +16,7 @@ const mainNavItems = [
 const getOtherMenus = (role: string) => {
     const menus = [
         { label: 'Siswa', href: '/dashboard/siswa', icon: Users, roles: ['admin', 'guru'] },
+        { label: 'Kartu Siswa', href: '/dashboard/kartu-siswa', icon: CreditCard, roles: ['admin', 'guru'] },
         { label: 'Rak', href: '/dashboard/rak', icon: Grid3x3, roles: ['admin'] },
         { label: 'Kategori Buku', href: '/dashboard/kategori', icon: Layers, roles: ['admin'] },
         { label: 'Buku', href: '/dashboard/buku', icon: BookOpen, roles: ['admin'] },

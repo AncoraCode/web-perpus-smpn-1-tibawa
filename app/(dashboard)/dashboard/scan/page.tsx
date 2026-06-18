@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Camera, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
+import { Camera, CheckCircle2, AlertCircle, Loader2, User } from 'lucide-react'
 import { BrowserMultiFormatReader, NotFoundException } from '@zxing/library'
+import { createClient } from '@/utils/supabase/client'
 import Modal from '@/app/components/Modal'
 
 export default function ScanPage() {
@@ -11,19 +12,22 @@ export default function ScanPage() {
     const [error, setError] = useState<string>('')
     const [loading, setLoading] = useState(true)
     const [hasPermission, setHasPermission] = useState<boolean | null>(null)
-    
-    // Barcode detection
+
+    // Barcode/QR detection
     const [isScanning, setIsScanning] = useState(false)
-    const [detectedCode, setDetectedCode] = useState<string>('')
+    const [detectedNis, setDetectedNis] = useState<string>('')
+    const [siswaPreview, setSiswaPreview] = useState<{ nama_lengkap: string; nis: string; kelas: string | null } | null>(null)
     const [showSuccessModal, setShowSuccessModal] = useState(false)
     const [showErrorModal, setShowErrorModal] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
+    const [isVerifying, setIsVerifying] = useState(false)
+
     const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null)
     const scanIntervalRef = useRef<NodeJS.Timeout | null>(null)
+    const supabase = createClient()
 
     useEffect(() => {
         startCamera()
-
         return () => {
             stopCamera()
             stopScanning()
@@ -48,30 +52,18 @@ export default function ScanPage() {
 
             if (videoRef.current) {
                 videoRef.current.srcObject = mediaStream
-                
-                // Tunggu video ready
+
                 videoRef.current.onloadedmetadata = async () => {
                     try {
                         await videoRef.current?.play()
-                        console.log('Camera started')
                     } catch (playError) {
-                        console.error('Play error:', playError)
-                        // Retry play on mobile
                         setTimeout(async () => {
-                            try {
-                                await videoRef.current?.play()
-                            } catch (e) {
-                                console.error('Retry play error:', e)
-                            }
+                            try { await videoRef.current?.play() } catch {}
                         }, 500)
                     }
-                    
-                    setTimeout(() => {
-                        startScanning()
-                    }, 500)
+                    setTimeout(() => { startScanning() }, 500)
                 }
             }
-
         } catch (err: any) {
             console.error('Error accessing camera:', err)
             setHasPermission(false)
@@ -98,43 +90,28 @@ export default function ScanPage() {
             const codeReader = new BrowserMultiFormatReader()
             codeReaderRef.current = codeReader
 
-            // Continuous scanning dengan interval
             const scanContinuously = async () => {
                 if (!videoRef.current || !isScanning) return
-
                 try {
                     const result = await codeReader.decodeOnceFromVideoDevice(undefined, videoRef.current)
-                    
                     if (result) {
-                        const scannedCode = result.getText()
-                        console.log('Barcode detected:', scannedCode)
-                        
-                        // Stop scanning
+                        const scannedText = result.getText().trim()
                         stopScanning()
-                        
-                        // Set detected code dan tampilkan modal
-                        setDetectedCode(scannedCode)
-                        setShowSuccessModal(true)
+                        await handleScanResult(scannedText)
                     }
                 } catch (err) {
-                    // Ignore NotFoundException - ini normal saat belum ada barcode
                     if (!(err instanceof NotFoundException)) {
                         console.error('Scan error:', err)
                     }
-                    
-                    // Continue scanning
                     if (isScanning) {
                         scanIntervalRef.current = setTimeout(scanContinuously, 100)
                     }
                 }
             }
-
-            // Mulai continuous scan
             scanContinuously()
-
         } catch (err) {
-            console.error('Error starting barcode scanner:', err)
-            setErrorMessage('Gagal memulai scanner barcode. Silakan coba lagi.')
+            console.error('Error starting scanner:', err)
+            setErrorMessage('Gagal memulai scanner. Silakan coba lagi.')
             setShowErrorModal(true)
             setIsScanning(false)
         }
@@ -142,12 +119,10 @@ export default function ScanPage() {
 
     const stopScanning = () => {
         setIsScanning(false)
-        
         if (scanIntervalRef.current) {
             clearTimeout(scanIntervalRef.current)
             scanIntervalRef.current = null
         }
-        
         if (codeReaderRef.current) {
             codeReaderRef.current.reset()
             codeReaderRef.current = null
@@ -161,26 +136,50 @@ export default function ScanPage() {
         }
     }
 
-    const handleRetry = () => {
-        startCamera()
+    const handleRetry = () => startCamera()
+
+    /* ── Verifikasi hasil scan ke database ── */
+    const handleScanResult = async (scannedNis: string) => {
+        setIsVerifying(true)
+        setDetectedNis(scannedNis)
+
+        const { data: siswa, error: fetchError } = await supabase
+            .from('siswa')
+            .select('nis, nama_lengkap, kelas, status')
+            .eq('nis', scannedNis)
+            .single()
+
+        setIsVerifying(false)
+
+        if (fetchError || !siswa) {
+            setErrorMessage(`NIS "${scannedNis}" tidak ditemukan dalam data siswa.`)
+            setShowErrorModal(true)
+            // Lanjutkan scanning lagi
+            setTimeout(() => startScanning(), 500)
+            return
+        }
+
+        if (siswa.status !== 'aktif') {
+            setErrorMessage(`Siswa "${siswa.nama_lengkap}" berstatus tidak aktif.`)
+            setShowErrorModal(true)
+            setTimeout(() => startScanning(), 500)
+            return
+        }
+
+        setSiswaPreview(siswa)
+        setShowSuccessModal(true)
     }
 
     const handleSuccessClose = () => {
         setShowSuccessModal(false)
-        setDetectedCode('')
-        // Lanjutkan scanning
-        setTimeout(() => {
-            startScanning()
-        }, 300)
+        setDetectedNis('')
+        setSiswaPreview(null)
+        setTimeout(() => startScanning(), 300)
     }
 
-    const handleProcessBarcode = async () => {
-        // TODO: Implement barcode processing logic
-        // Bisa redirect ke halaman peminjaman dengan kode buku
-        console.log('Processing barcode:', detectedCode)
-        
-        // Contoh: redirect ke peminjaman dengan query
-        window.location.href = `/dashboard/peminjaman?kode=${detectedCode}`
+    /* ── Redirect ke Peminjaman dengan NIS auto-select ── */
+    const handleProcessToPeminjaman = () => {
+        window.location.href = `/dashboard/peminjaman?nis=${encodeURIComponent(detectedNis)}`
     }
 
     return (
@@ -205,10 +204,8 @@ export default function ScanPage() {
                         <p className="text-white/70 text-sm text-center mb-6 leading-relaxed">
                             {error}
                         </p>
-                        <button
-                            onClick={handleRetry}
-                            className="w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-colors"
-                        >
+                        <button onClick={handleRetry}
+                            className="w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-colors">
                             Coba Lagi
                         </button>
                     </div>
@@ -218,116 +215,109 @@ export default function ScanPage() {
             {/* Camera Preview */}
             {!loading && !error && (
                 <>
-                    {/* Video Element - Fullscreen */}
-                    <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        muted
-                        className="fixed inset-0 w-full h-full object-cover"
-                        style={{ zIndex: 1 }}
-                    />
+                    <video ref={videoRef} autoPlay playsInline muted
+                        className="fixed inset-0 w-full h-full object-cover" style={{ zIndex: 1 }} />
 
-                    {/* Scan Frame Overlay */}
                     <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 10 }}>
-                        {/* Dark overlay with transparent center */}
                         <div className="absolute inset-0 bg-black/50" />
-
-                        {/* Scan frame */}
-                        <div className="relative w-72 h-48 z-20">
-                            {/* Corner borders */}
+                        <div className="relative w-64 h-64 z-20">
                             <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-white rounded-tl-2xl" />
                             <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-white rounded-tr-2xl" />
                             <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-white rounded-bl-2xl" />
                             <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-white rounded-br-2xl" />
-
-                            {/* Scanning line animation */}
                             {isScanning && (
                                 <div className="absolute inset-x-0 top-0 h-1 bg-primary shadow-lg shadow-primary/50 animate-scan" />
                             )}
                         </div>
                     </div>
 
-                    {/* Instructions */}
                     <div className="fixed bottom-24 left-0 right-0 px-6 z-20">
                         <div className="bg-black/70 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
                             <p className="text-white text-center text-sm font-medium mb-1">
-                                Arahkan kamera ke barcode buku
+                                Arahkan kamera ke QR Code kartu siswa
                             </p>
                             <p className="text-white/60 text-center text-xs">
-                                Pastikan barcode terlihat jelas dan tidak buram
+                                Pastikan QR Code terlihat jelas di dalam frame
                             </p>
                         </div>
                     </div>
 
-                    {/* Camera Status */}
                     <div className="fixed top-6 left-0 right-0 px-6 z-20 flex justify-center">
                         <div className={`backdrop-blur-sm rounded-xl px-4 py-2 border inline-flex items-center gap-2 ${
-                            isScanning 
-                                ? 'bg-green-500/20 border-green-500/30' 
+                            isVerifying
+                                ? 'bg-blue-500/20 border-blue-500/30'
+                                : isScanning
+                                ? 'bg-green-500/20 border-green-500/30'
                                 : 'bg-yellow-500/20 border-yellow-500/30'
                         }`}>
-                            <Camera className={`w-4 h-4 ${isScanning ? 'text-green-400' : 'text-yellow-400'}`} />
-                            <span className={`text-xs font-medium ${isScanning ? 'text-green-400' : 'text-yellow-400'}`}>
-                                {isScanning ? 'Scanner Aktif' : 'Menginisialisasi...'}
-                            </span>
+                            {isVerifying ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+                                    <span className="text-xs font-medium text-blue-400">Memverifikasi...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Camera className={`w-4 h-4 ${isScanning ? 'text-green-400' : 'text-yellow-400'}`} />
+                                    <span className={`text-xs font-medium ${isScanning ? 'text-green-400' : 'text-yellow-400'}`}>
+                                        {isScanning ? 'Scanner Aktif' : 'Menginisialisasi...'}
+                                    </span>
+                                </>
+                            )}
                         </div>
                     </div>
                 </>
             )}
 
-            {/* Success Modal - Barcode Detected */}
+            {/* Success Modal — Siswa Ditemukan */}
             <Modal
                 isOpen={showSuccessModal}
                 onClose={handleSuccessClose}
-                title="Barcode Terdeteksi!"
+                title="Siswa Terdeteksi!"
                 confirmation={{
                     negativeBtn: 'Scan Lagi',
-                    positiveBtn: 'Proses Buku',
-                    handlePositiveBtn: handleProcessBarcode
+                    positiveBtn: 'Lanjut ke Peminjaman',
+                    handlePositiveBtn: handleProcessToPeminjaman,
                 }}
             >
-                <div className="flex flex-col items-center py-4">
+                <div className="flex flex-col items-center py-2">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                        <CheckCircle2 className="w-8 h-8 text-green-600" />
+                        <User className="w-8 h-8 text-green-600" />
                     </div>
-                    <p className="text-gray-700 text-sm mb-2">Kode Buku:</p>
-                    <div className="bg-gray-100 rounded-xl px-4 py-3 w-full">
-                        <p className="text-center font-mono font-bold text-lg text-gray-900">
-                            {detectedCode}
-                        </p>
-                    </div>
+                    {siswaPreview && (
+                        <div className="text-center">
+                            <p className="font-bold text-gray-900 text-base">{siswaPreview.nama_lengkap}</p>
+                            <div className="flex items-center justify-center gap-2 mt-1.5">
+                                <span className="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+                                    {siswaPreview.nis}
+                                </span>
+                                {siswaPreview.kelas && (
+                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium">
+                                        Kelas {siswaPreview.kelas}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    )}
                     <p className="text-gray-500 text-xs mt-4 text-center">
-                        Klik "Proses Buku" untuk melanjutkan peminjaman/pengembalian
+                        Klik "Lanjut ke Peminjaman" untuk mencatat peminjaman buku
                     </p>
                 </div>
             </Modal>
 
             {/* Error Modal */}
-            <Modal
-                isOpen={showErrorModal}
-                onClose={() => setShowErrorModal(false)}
-                title="Error Scanner"
-            >
+            <Modal isOpen={showErrorModal} onClose={() => setShowErrorModal(false)} title="QR Code Tidak Valid">
                 <div className="flex flex-col items-center py-4">
                     <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
                         <AlertCircle className="w-8 h-8 text-red-600" />
                     </div>
-                    <p className="text-gray-700 text-sm text-center">
-                        {errorMessage}
-                    </p>
+                    <p className="text-gray-700 text-sm text-center">{errorMessage}</p>
                 </div>
             </Modal>
 
-            {/* CSS for scanning animation */}
             <style jsx>{`
                 @keyframes scan {
-                    0%, 100% {
-                        top: 0;
-                    }
-                    50% {
-                        top: calc(100% - 4px);
-                    }
+                    0%, 100% { top: 0; }
+                    50% { top: calc(100% - 4px); }
                 }
                 .animate-scan {
                     animation: scan 2s ease-in-out infinite;
