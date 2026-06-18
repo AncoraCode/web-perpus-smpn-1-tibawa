@@ -1,12 +1,39 @@
-export default async function RiwayatPage() {
-    return (
-        <div className="max-w-7xl mx-auto px-4 py-6">
-            
-            <div className="text-center py-20">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">Riwayat Peminjaman</h1>
-                <p className="text-gray-500">Riwayat peminjaman buku yang telah dikembalikan</p>
-            </div>
+import { redirect } from 'next/navigation'
+import { getUserFromCookie } from '@/utils/get-user'
+import { createClient } from '@/utils/supabase/server'
+import RiwayatClient from './RiwayatClient'
 
-        </div>
-    )
+async function getRiwayatData() {
+    try {
+        const supabase = await createClient()
+
+        const { data, error } = await supabase
+            .from('riwayat_peminjaman')
+            .select(`
+                *,
+                siswa:siswa_id ( id, nis, nama_lengkap, kelas ),
+                buku:buku_id ( id, kode_buku, judul ),
+                petugas:petugas_id ( id, nama_lengkap )
+            `)
+            .order('tanggal_kembali', { ascending: false })
+
+        if (error) {
+            console.error('Error fetching riwayat:', error)
+            return []
+        }
+
+        return data || []
+    } catch (error) {
+        console.error('Error in getRiwayatData:', error)
+        return []
+    }
+}
+
+export default async function RiwayatPage() {
+    const user = await getUserFromCookie()
+    if (!user) redirect('/login')
+
+    const riwayatData = await getRiwayatData()
+
+    return <RiwayatClient riwayatData={riwayatData} user={user} />
 }
