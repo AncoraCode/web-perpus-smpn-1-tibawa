@@ -30,7 +30,18 @@ export default async function KartuSiswaPage() {
     const user = await getUserFromCookie()
     if (!user) redirect('/login')
 
-    const siswaData = await getSiswaData()
+    const supabase = await createClient()
 
-    return <KartuSiswaClient siswaData={siswaData} />
+    const [siswaData, { data: sekolahData }] = await Promise.all([
+        getSiswaData(),
+        supabase.from('detail_sekolah').select('nama_sekolah, nama_perpustakaan, logo_url').limit(1).maybeSingle()
+    ])
+
+    const sekolahInfo = {
+        namaSekolah: sekolahData?.nama_sekolah || 'SMP Negeri 1 Tibawa',
+        namaPerpustakaan: sekolahData?.nama_perpustakaan || 'Perpus Bougenville',
+        logoUrl: sekolahData?.logo_url || '/assets/img/logo-sekolah.png'
+    }
+
+    return <KartuSiswaClient siswaData={siswaData} sekolahInfo={sekolahInfo} />
 }

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import Modal from '@/app/components/Modal'
 import { createClient } from '@/utils/supabase/client'
+import { useRouter } from 'next/navigation'
 
 interface Sekolah {
     id: string
@@ -31,6 +32,7 @@ interface SekolahClientProps {
 
 export default function SekolahClient({ initialData }: SekolahClientProps) {
     const supabase = createClient()
+    const router = useRouter()
 
     // Form states
     const [namaSekolah, setNamaSekolah] = useState(initialData?.nama_sekolah || '')
@@ -159,6 +161,9 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
                 if (error) throw error
                 showNotif(true, 'Detail Sekolah berhasil ditambahkan!')
             }
+
+            // Memaksa Next.js untuk mereload data server komponen (seperti header layout)
+            router.refresh()
 
             // Reset file states so they don't upload again unless changed
             setLogoFile(null)

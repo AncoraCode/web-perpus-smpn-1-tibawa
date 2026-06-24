@@ -1,14 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Eye, EyeOff, Loader2, User, Lock } from 'lucide-react'
 import NProgress from 'nprogress'
+import { createClient } from '@/utils/supabase/client'
 
 export default function LoginPage() {
     const [formData, setFormData] = useState({ username: '', password: '' })
     const [showPassword, setShowPassword] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+    const [sekolah, setSekolah] = useState<{ logo_url: string, foto_header_url: string } | null>(null)
+
+    useEffect(() => {
+        const fetchSekolah = async () => {
+            const supabase = createClient()
+            const { data } = await supabase
+                .from('detail_sekolah')
+                .select('logo_url, foto_header_url')
+                .limit(1)
+                .maybeSingle()
+            setSekolah(data)
+        }
+        fetchSekolah()
+    }, [])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -47,7 +62,7 @@ export default function LoginPage() {
             {/* Background foto sekolah */}
             <div className="absolute inset-0">
                 <img
-                    src="/assets/img/sekolah.jpg"
+                    src={sekolah?.foto_header_url || "/assets/img/sekolah.jpg"}
                     alt="SMP Negeri 1 Tibawa"
                     className="w-full h-full object-cover"
                 />
@@ -62,10 +77,9 @@ export default function LoginPage() {
                 <div className="flex flex-col items-center mb-8">
                     <div className="rounded-full flex items-center justify-center mb-2 overflow-hidden">
                         <img
-                            src="/assets/img/logo-sekolah.png"
+                            src={sekolah?.logo_url || "/assets/img/logo-sekolah.png"}
                             alt="Logo SMPN 1 Tibawa"
                             className="w-24 h-24 object-contain"
-                        // onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                         />
                     </div>
                     <h1 className="text-white font-semibold text-2xl mb-1">Login</h1>

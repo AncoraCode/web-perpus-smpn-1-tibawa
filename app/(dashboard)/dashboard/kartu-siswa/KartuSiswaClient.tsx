@@ -20,12 +20,17 @@ interface Siswa {
 
 interface KartuSiswaClientProps {
     siswaData: Siswa[]
+    sekolahInfo: {
+        namaSekolah: string
+        namaPerpustakaan: string
+        logoUrl: string
+    }
 }
 
 /* ─────────────────────────────────────────
    KARTU SISWA — ukuran KTP landscape (85.6mm x 54mm)
 ───────────────────────────────────────── */
-function KartuSiswa({ siswa }: { siswa: Siswa }) {
+function KartuSiswa({ siswa, sekolahInfo }: { siswa: Siswa, sekolahInfo: KartuSiswaClientProps['sekolahInfo'] }) {
     return (
         <div
             className="kartu-siswa bg-white border border-gray-300 rounded-lg overflow-hidden flex flex-col"
@@ -38,14 +43,14 @@ function KartuSiswa({ siswa }: { siswa: Siswa }) {
         >
             {/* Kop */}
             <div className="bg-primary px-3 py-2 flex items-center gap-2 flex-shrink-0">
-                <img src="/assets/img/logo-sekolah.png" alt="Logo"
+                <img src={sekolahInfo.logoUrl} alt="Logo"
                     className="w-7 h-7 object-contain flex-shrink-0" />
                 <div className="leading-none">
                     <p className="text-white font-bold" style={{ fontSize: '8.5pt' }}>
-                        Perpus Bougenville
+                        {sekolahInfo.namaPerpustakaan}
                     </p>
                     <p className="text-white/80" style={{ fontSize: '6pt' }}>
-                        SMPN 1 Tibawa
+                        {sekolahInfo.namaSekolah}
                     </p>
                 </div>
             </div>
@@ -96,7 +101,7 @@ function KartuSiswa({ siswa }: { siswa: Siswa }) {
 /* ─────────────────────────────────────────
    MAIN COMPONENT
 ───────────────────────────────────────── */
-export default function KartuSiswaClient({ siswaData }: KartuSiswaClientProps) {
+export default function KartuSiswaClient({ siswaData, sekolahInfo }: KartuSiswaClientProps) {
     const [mode, setMode] = useState<'siswa' | 'kelas'>('siswa')
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -311,7 +316,7 @@ export default function KartuSiswaClient({ siswaData }: KartuSiswaClientProps) {
                         className="bg-gray-100 rounded-xl p-4 overflow-x-auto">
                         <div className="flex flex-wrap gap-3 justify-center" style={{ minWidth: 'fit-content' }}>
                             {siswaToPrint.map(s => (
-                                <KartuSiswa key={s.id} siswa={s} />
+                                <KartuSiswa key={s.id} siswa={s} sekolahInfo={sekolahInfo} />
                             ))}
                         </div>
                     </div>

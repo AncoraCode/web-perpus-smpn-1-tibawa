@@ -1,12 +1,8 @@
 import type { Metadata } from "next";
 import "@/app/globals.css";
-{/* Libs */ }
 import { createClient } from "@/utils/supabase/server";
-import { getUserFromCookie } from "@/utils/get-user";
-{/* Libs End */ }
-{/* Components */ }
-import GeneralLayout from "@/app/components/GeneralLayout";
-{/* Components End */ }
+import NextTopLoader from 'nextjs-toploader';
+import AOSInit from "@/app/components/AOSInit";
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
@@ -30,16 +26,40 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user = await getUserFromCookie();
-
   return (
-    <GeneralLayout user={user}>
-      {children}
-    </GeneralLayout>
+    <html lang="id" className="scroll-smooth">
+      <head>
+        <link rel="preconnect" href="https://fonts.gstatic.com" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body
+        className="antialiased bg-gray-200 min-h-screen flex justify-center"
+        style={{ fontFamily: "'Rubik', sans-serif" }}
+      >
+        <NextTopLoader
+          color="#2C4EEE"
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={2}
+          crawl={true}
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #2C4EEE,0 0 5px #2C4EEE"
+          showForHashAnchor={false}
+        />
+        <AOSInit />
+        
+        {children}
+      </body>
+    </html>
   );
 }
