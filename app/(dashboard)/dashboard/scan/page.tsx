@@ -68,6 +68,16 @@ export default function ScanPage() {
                     if (isScanningRef.current) return
                     isScanningRef.current = true
                     setIsScanning(false)
+                    
+                    // Efek getar ketika barcode berhasil terbaca (jika didukung oleh perangkat/browser)
+                    if (typeof window !== 'undefined' && navigator.vibrate) {
+                        try {
+                            navigator.vibrate(200)
+                        } catch (e) {
+                            console.warn('Vibration API error:', e)
+                        }
+                    }
+
                     await handleScanResult(decodedText.trim())
                 },
                 () => {
