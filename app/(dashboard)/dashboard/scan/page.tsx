@@ -61,7 +61,7 @@ export default function ScanPage() {
                 { facingMode: 'environment' },
                 {
                     fps: 15,
-                    qrbox: { width: 260, height: 260 },
+                    qrbox: { width: 270, height: 270 },
                     aspectRatio: 1.0,
                 },
                 async (decodedText) => {
@@ -117,7 +117,7 @@ export default function ScanPage() {
     /* ── Verifikasi NIS ke database ── */
     const handleScanResult = async (scannedNis: string) => {
         setIsVerifying(true)
-
+ 
         const { data: siswa, error: fetchError } = await supabase
             .from('siswa')
             .select('nis, nama_lengkap, kelas, status')
@@ -184,16 +184,15 @@ export default function ScanPage() {
             {/* ── Overlay UI di atas video ── */}
             {!loading && !error && (
                 <>
-                    {/* Bayangan gelap di luar area fokus + kotak transparan di tengah */}
-                    <div className="fixed inset-0 z-10 pointer-events-none" style={{
-                        background: 'radial-gradient(circle, transparent 135px, rgba(0,0,0,0.65) 160px)'
-                    }} />
-
-                    {/* Kotak panduan scan — persegi dengan sudut rounded */}
+                    {/* Kotak panduan scan — persegi dengan sudut rounded dan bayangan luar */}
                     <div className="fixed inset-0 flex items-center justify-center z-20 pointer-events-none">
                         <div
-                            className="relative"
-                            style={{ width: 270, height: 270 }}
+                            className="relative rounded-2xl"
+                            style={{
+                                width: 270,
+                                height: 270,
+                                boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.65)'
+                            }}
                         >
                             {/* Sudut kiri atas */}
                             <div className="absolute top-0 left-0 w-10 h-10 border-t-[3px] border-l-[3px] border-white rounded-tl-2xl" />
