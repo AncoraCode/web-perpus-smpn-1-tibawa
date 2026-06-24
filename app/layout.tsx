@@ -8,7 +8,7 @@ import GeneralLayout from "@/app/components/GeneralLayout";
 {/* Components End */ }
 
 export const metadata: Metadata = {
-  title: "SMP NEGERI 1 TIBAWA - PERPUSTAKAAN",
+  title: "Perpustakaan Bougenville SMPN 1 Tibawa",
 };
 
 export default async function RootLayout({

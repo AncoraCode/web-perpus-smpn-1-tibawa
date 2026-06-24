@@ -9,12 +9,14 @@ import Modal from '@/app/components/Modal'
 export default function ScanPage() {
     const videoRef = useRef<HTMLVideoElement>(null)
     const [stream, setStream] = useState<MediaStream | null>(null)
+    const streamRef = useRef<MediaStream | null>(null)
     const [error, setError] = useState<string>('')
     const [loading, setLoading] = useState(true)
     const [hasPermission, setHasPermission] = useState<boolean | null>(null)
 
     // Barcode/QR detection
     const [isScanning, setIsScanning] = useState(false)
+    const isScanningRef = useRef(false)
     const [detectedNis, setDetectedNis] = useState<string>('')
     const [siswaPreview, setSiswaPreview] = useState<{ nama_lengkap: string; nis: string; kelas: string | null } | null>(null)
     const [showSuccessModal, setShowSuccessModal] = useState(false)
@@ -23,8 +25,17 @@ export default function ScanPage() {
     const [isVerifying, setIsVerifying] = useState(false)
 
     const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null)
-    const scanIntervalRef = useRef<NodeJS.Timeout | null>(null)
     const supabase = createClient()
+
+    const setIsScanningState = (value: boolean) => {
+        setIsScanning(value)
+        isScanningRef.current = value
+    }
+
+    const setStreamState = (newStream: MediaStream | null) => {
+        setStream(newStream)
+        streamRef.current = newStream
+    }
 
     useEffect(() => {
         startCamera()
@@ -39,36 +50,63 @@ export default function ScanPage() {
             setLoading(true)
             setError('')
 
+            // Check if secure context/mediaDevices API is available
+            if (typeof window !== 'undefined' && (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)) {
+                throw new Error('SecureContextRequired')
+            }
+
+            // Wait a brief moment to make sure videoRef is rendered
+            if (!videoRef.current) {
+                await new Promise(resolve => setTimeout(resolve, 100))
+            }
+
             const mediaStream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: 'environment',
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 }
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
                 }
             })
 
-            setStream(mediaStream)
+            setStreamState(mediaStream)
             setHasPermission(true)
 
             if (videoRef.current) {
                 videoRef.current.srcObject = mediaStream
 
+                // iOS Safari/Chrome requirements
+                videoRef.current.setAttribute('playsinline', 'true')
+                videoRef.current.setAttribute('muted', 'true')
+                videoRef.current.muted = true
+                videoRef.current.playsInline = true
+
                 videoRef.current.onloadedmetadata = async () => {
                     try {
                         await videoRef.current?.play()
                     } catch (playError) {
+                        console.warn('Play error on loadedmetadata, retrying:', playError)
                         setTimeout(async () => {
                             try { await videoRef.current?.play() } catch {}
                         }, 500)
                     }
-                    setTimeout(() => { startScanning() }, 500)
+                    startScanning()
+                }
+
+                // In case it was already loaded
+                if (videoRef.current.readyState >= 2) {
+                    try {
+                        await videoRef.current.play()
+                    } catch {}
+                    startScanning()
                 }
             }
         } catch (err: any) {
             console.error('Error accessing camera:', err)
             setHasPermission(false)
 
-            if (err.name === 'NotAllowedError') {
+            if (err.message === 'SecureContextRequired') {
+                setError('Kamera hanya dapat diakses melalui koneksi aman (HTTPS) atau localhost. Jika Anda menguji di perangkat mobile secara lokal, silakan gunakan tunnel HTTPS (seperti ngrok) atau aktifkan flag secure origin pada browser Chrome.')
+            } else if (err.name === 'NotAllowedError') {
                 setError('Akses kamera ditolak. Silakan izinkan akses kamera di pengaturan browser Anda.')
             } else if (err.name === 'NotFoundError') {
                 setError('Kamera tidak ditemukan pada perangkat ini.')
@@ -82,47 +120,36 @@ export default function ScanPage() {
         }
     }
 
-    const startScanning = async () => {
-        if (!videoRef.current || isScanning) return
+    const startScanning = () => {
+        if (!videoRef.current || isScanningRef.current) return
 
-        try {
-            setIsScanning(true)
-            const codeReader = new BrowserMultiFormatReader()
-            codeReaderRef.current = codeReader
+        setIsScanningState(true)
 
-            const scanContinuously = async () => {
-                if (!videoRef.current || !isScanning) return
-                try {
-                    const result = await codeReader.decodeOnceFromVideoDevice(undefined, videoRef.current)
-                    if (result) {
-                        const scannedText = result.getText().trim()
-                        stopScanning()
-                        await handleScanResult(scannedText)
-                    }
-                } catch (err) {
-                    if (!(err instanceof NotFoundException)) {
-                        console.error('Scan error:', err)
-                    }
-                    if (isScanning) {
-                        scanIntervalRef.current = setTimeout(scanContinuously, 100)
-                    }
+        if (!codeReaderRef.current) {
+            codeReaderRef.current = new BrowserMultiFormatReader()
+        }
+
+        codeReaderRef.current.decodeFromVideoElementContinuously(
+            videoRef.current,
+            async (result, err) => {
+                // Ignore scanning callbacks if scanner is currently paused
+                if (!isScanningRef.current) return
+
+                if (result) {
+                    const scannedText = result.getText().trim()
+                    setIsScanningState(false) // Pause scanner actions
+                    await handleScanResult(scannedText)
+                }
+
+                if (err && !(err instanceof NotFoundException)) {
+                    console.error('Scan error:', err)
                 }
             }
-            scanContinuously()
-        } catch (err) {
-            console.error('Error starting scanner:', err)
-            setErrorMessage('Gagal memulai scanner. Silakan coba lagi.')
-            setShowErrorModal(true)
-            setIsScanning(false)
-        }
+        )
     }
 
     const stopScanning = () => {
-        setIsScanning(false)
-        if (scanIntervalRef.current) {
-            clearTimeout(scanIntervalRef.current)
-            scanIntervalRef.current = null
-        }
+        setIsScanningState(false)
         if (codeReaderRef.current) {
             codeReaderRef.current.reset()
             codeReaderRef.current = null
@@ -130,13 +157,18 @@ export default function ScanPage() {
     }
 
     const stopCamera = () => {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop())
-            setStream(null)
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop())
+            streamRef.current = null
         }
+        setStream(null)
     }
 
-    const handleRetry = () => startCamera()
+    const handleRetry = () => {
+        stopCamera()
+        stopScanning()
+        startCamera()
+    }
 
     /* ── Verifikasi hasil scan ke database ── */
     const handleScanResult = async (scannedNis: string) => {
@@ -154,15 +186,12 @@ export default function ScanPage() {
         if (fetchError || !siswa) {
             setErrorMessage(`NIS "${scannedNis}" tidak ditemukan dalam data siswa.`)
             setShowErrorModal(true)
-            // Lanjutkan scanning lagi
-            setTimeout(() => startScanning(), 500)
             return
         }
 
         if (siswa.status !== 'aktif') {
             setErrorMessage(`Siswa "${siswa.nama_lengkap}" berstatus tidak aktif.`)
             setShowErrorModal(true)
-            setTimeout(() => startScanning(), 500)
             return
         }
 
@@ -174,7 +203,12 @@ export default function ScanPage() {
         setShowSuccessModal(false)
         setDetectedNis('')
         setSiswaPreview(null)
-        setTimeout(() => startScanning(), 300)
+        setTimeout(() => setIsScanningState(true), 300)
+    }
+
+    const handleErrorClose = () => {
+        setShowErrorModal(false)
+        setTimeout(() => setIsScanningState(true), 300)
     }
 
     /* ── Redirect ke Peminjaman dengan NIS auto-select ── */
@@ -213,11 +247,12 @@ export default function ScanPage() {
             )}
 
             {/* Camera Preview */}
+            <video ref={videoRef} autoPlay playsInline muted
+                className={`fixed inset-0 w-full h-full object-cover ${loading || error ? 'hidden' : ''}`}
+                style={{ zIndex: 1 }} />
+
             {!loading && !error && (
                 <>
-                    <video ref={videoRef} autoPlay playsInline muted
-                        className="fixed inset-0 w-full h-full object-cover" style={{ zIndex: 1 }} />
-
                     <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 10 }}>
                         <div className="absolute inset-0 bg-black/50" />
                         <div className="relative w-64 h-64 z-20">
@@ -259,7 +294,7 @@ export default function ScanPage() {
                                 <>
                                     <Camera className={`w-4 h-4 ${isScanning ? 'text-green-400' : 'text-yellow-400'}`} />
                                     <span className={`text-xs font-medium ${isScanning ? 'text-green-400' : 'text-yellow-400'}`}>
-                                        {isScanning ? 'Scanner Aktif' : 'Menginisialisasi...'}
+                                        {isScanning ? 'Scanner Aktif' : 'Scanner Siap'}
                                     </span>
                                 </>
                             )}
@@ -305,7 +340,7 @@ export default function ScanPage() {
             </Modal>
 
             {/* Error Modal */}
-            <Modal isOpen={showErrorModal} onClose={() => setShowErrorModal(false)} title="QR Code Tidak Valid">
+            <Modal isOpen={showErrorModal} onClose={handleErrorClose} title="QR Code Tidak Valid">
                 <div className="flex flex-col items-center py-4">
                     <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
                         <AlertCircle className="w-8 h-8 text-red-600" />

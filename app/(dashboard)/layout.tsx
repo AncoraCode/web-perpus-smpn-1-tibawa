@@ -6,7 +6,7 @@ import DashboardTopNav from '@/app/components/DashboardTopNav'
 import DashboardBottomNav from '@/app/components/DashboardBottomNav'
 
 export const metadata = {
-  title: "Dashboard - Perpustakaan Digital SMP Negeri 1 Tibawa",
+  title: "Dashboard - Perpustakaan Bougenville SMPN 1 Tibawa",
 };
 
 export default async function DashboardLayout({

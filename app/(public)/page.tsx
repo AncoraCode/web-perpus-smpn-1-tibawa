@@ -103,10 +103,10 @@ export default async function BerandaPage() {
 
                     {/* Judul */}
                     <h1 className="text-white font-bold text-2xl leading-snug mb-1">
-                        SISTEM PERPUSTAKAAN<br />DIGITAL
+                        PERPUSTAKAAN BOUGENVILLE<br />SMPN 1 TIBAWA
                     </h1>
                     <p className="text-white/60 text-xs">
-                        SMP Negeri 1 Tibawa – Tibawa, Gorontalo
+                        Kecamatan Tibawa, Kabupaten Gorontalo
                     </p>
                 </div>
             </header>

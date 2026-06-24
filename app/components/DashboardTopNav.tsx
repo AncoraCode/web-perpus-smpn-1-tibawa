@@ -56,10 +56,10 @@ export default function DashboardTopNav({ user }: DashboardTopNavProps) {
                         />
                         <div>
                             <h1 className="text-sm font-bold text-gray-900 leading-tight">
-                                Perpustakaan Digital
+                                Perpus Bougenville
                             </h1>
                             <p className="text-[10px] text-gray-500 leading-tight mt-0.5">
-                                SMP NEGERI 1 TIBAWA
+                                SMPN 1 TIBAWA
                             </p>
                         </div>
                     </div>

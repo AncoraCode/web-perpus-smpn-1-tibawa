@@ -42,10 +42,10 @@ function KartuSiswa({ siswa }: { siswa: Siswa }) {
                     className="w-7 h-7 object-contain flex-shrink-0" />
                 <div className="leading-none">
                     <p className="text-white font-bold" style={{ fontSize: '8.5pt' }}>
-                        Perpustakaan Digital
+                        Perpus Bougenville
                     </p>
                     <p className="text-white/80" style={{ fontSize: '6pt' }}>
-                        SMP Negeri 1 Tibawa
+                        SMPN 1 Tibawa
                     </p>
                 </div>
             </div>
