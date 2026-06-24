@@ -11,6 +11,7 @@ import { createClient } from '@/utils/supabase/client'
 interface Sekolah {
     id: string
     nama_sekolah: string
+    nama_perpustakaan: string | null
     alamat: string | null
     kecamatan_kabupaten: string | null
     npsn: string | null
@@ -33,6 +34,7 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
 
     // Form states
     const [namaSekolah, setNamaSekolah] = useState(initialData?.nama_sekolah || '')
+    const [namaPerpustakaan, setNamaPerpustakaan] = useState(initialData?.nama_perpustakaan || '')
     const [npsn, setNpsn] = useState(initialData?.npsn || '')
     const [kepalaSekolah, setKepalaSekolah] = useState(initialData?.kepala_sekolah || '')
     const [telepon, setTelepon] = useState(initialData?.telepon || '')
@@ -125,6 +127,7 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
 
             const payload = {
                 nama_sekolah: namaSekolah.trim(),
+                nama_perpustakaan: namaPerpustakaan.trim() || null,
                 npsn: npsn.trim() || null,
                 kepala_sekolah: kepalaSekolah.trim() || null,
                 telepon: telepon.trim() || null,
@@ -278,6 +281,21 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
                             className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none"
                             placeholder="Contoh: SMP Negeri 1 Tibawa"
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                            Nama Perpustakaan / Website
+                        </label>
+                        <input
+                            type="text"
+                            value={namaPerpustakaan}
+                            onChange={e => setNamaPerpustakaan(e.target.value)}
+                            disabled={loading}
+                            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none"
+                            placeholder="Contoh: Perpustakaan Bougenville"
+                        />
+                        <p className="text-[10px] text-gray-400 mt-1">Nama ini akan tampil di header website, judul browser, dan landing page.</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

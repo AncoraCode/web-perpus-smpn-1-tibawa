@@ -11,9 +11,14 @@ interface DashboardTopNavProps {
         nama_lengkap?: string
         foto_url?: string | null
     }
+    sekolahInfo?: {
+        namaSekolah: string
+        namaPerpustakaan: string
+        logoUrl: string | null
+    }
 }
 
-export default function DashboardTopNav({ user }: DashboardTopNavProps) {
+export default function DashboardTopNav({ user, sekolahInfo }: DashboardTopNavProps) {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
     const [showLogoutModal, setShowLogoutModal] = useState(false)
     const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -50,16 +55,16 @@ export default function DashboardTopNav({ user }: DashboardTopNavProps) {
                     {/* Kiri: Logo + Title */}
                     <div className="flex items-center gap-3">
                         <img
-                            src="/assets/img/logo-sekolah.png"
-                            alt="Logo SMP Negeri 1 Tibawa"
+                            src={sekolahInfo?.logoUrl || '/assets/img/logo-sekolah.png'}
+                            alt={`Logo ${sekolahInfo?.namaSekolah || 'Sekolah'}`}
                             className="w-12 h-12 object-contain"
                         />
                         <div>
                             <h1 className="text-sm font-bold text-gray-900 leading-tight">
-                                Perpus Bougenville
+                                {sekolahInfo?.namaPerpustakaan || 'Perpus Bougenville'}
                             </h1>
                             <p className="text-[10px] text-gray-500 leading-tight mt-0.5">
-                                SMPN 1 TIBAWA
+                                {sekolahInfo?.namaSekolah || 'SMPN 1 TIBAWA'}
                             </p>
                         </div>
                     </div>

@@ -80,6 +80,7 @@ export default async function BerandaPage() {
 
     // Fallback data statis jika detailSekolah belum dikonfigurasi
     const namaSekolah = detailSekolah?.nama_sekolah || 'SMP Negeri 1 Tibawa'
+    const namaPerpustakaan = detailSekolah?.nama_perpustakaan || 'Perpustakaan Bougenville'
     const kecamatanKabupaten = detailSekolah?.kecamatan_kabupaten || 'Kecamatan Tibawa, Kabupaten Gorontalo'
     const logoUrl = detailSekolah?.logo_url || '/assets/img/logo-sekolah.png'
     const bannerUrl = detailSekolah?.foto_header_url || '/assets/img/perpus.jpg'
@@ -120,14 +121,8 @@ export default async function BerandaPage() {
 
                     {/* Judul */}
                     <h1 className="text-white font-bold text-2xl leading-snug mb-1 uppercase">
-                        {namaSekolah.toUpperCase().includes('PERPUSTAKAAN') ? (
-                            namaSekolah
-                        ) : (
-                            <>
-                                PERPUSTAKAAN BOUGENVILLE<br />
-                                {namaSekolah}
-                            </>
-                        )}
+                        {namaPerpustakaan.toUpperCase()}<br />
+                        {namaSekolah}
                     </h1>
                     <p className="text-white/60 text-xs">
                         {kecamatanKabupaten}

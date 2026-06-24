@@ -8,9 +8,27 @@ import { getUserFromCookie } from "@/utils/get-user";
 import GeneralLayout from "@/app/components/GeneralLayout";
 {/* Components End */ }
 
-export const metadata: Metadata = {
-  title: "Perpustakaan Bougenville SMPN 1 Tibawa",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase
+      .from('detail_sekolah')
+      .select('nama_perpustakaan, nama_sekolah')
+      .limit(1)
+      .maybeSingle()
+
+    const namaPerpustakaan = data?.nama_perpustakaan || 'Perpustakaan Bougenville'
+    const namaSekolah = data?.nama_sekolah || 'SMPN 1 Tibawa'
+
+    return {
+      title: `${namaPerpustakaan} - ${namaSekolah}`,
+    }
+  } catch {
+    return {
+      title: 'Perpustakaan Bougenville SMPN 1 Tibawa',
+    }
+  }
+}
 
 export default async function RootLayout({
   children,

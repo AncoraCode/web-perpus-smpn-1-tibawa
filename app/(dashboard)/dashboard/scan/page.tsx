@@ -60,23 +60,20 @@ export default function ScanPage() {
             await html5Qrcode.start(
                 { facingMode: 'environment' },
                 {
-                    fps: 15,
-                    qrbox: { width: 270, height: 270 },
-                    aspectRatio: 1.0,
+                    fps: 10,
+                    qrbox: (viewfinderWidth, viewfinderHeight) => {
+                        // Buat scan box yang signifikan lebih kecil dari viewport
+                        // sehingga hanya barcode yang benar-benar ada di dalam kotak target yang terbaca
+                        const minDim = Math.min(viewfinderWidth, viewfinderHeight)
+                        const boxSize = Math.floor(minDim * 0.65)
+                        return { width: boxSize, height: boxSize }
+                    },
+                    aspectRatio: 1.777, // 16:9 — kamera landscape dengan area decode yang lebih presisi
                 },
                 async (decodedText) => {
                     if (isScanningRef.current) return
                     isScanningRef.current = true
                     setIsScanning(false)
-                    
-                    // Efek getar ketika barcode berhasil terbaca (jika didukung oleh perangkat/browser)
-                    if (typeof window !== 'undefined' && navigator.vibrate) {
-                        try {
-                            navigator.vibrate(200)
-                        } catch (e) {
-                            console.warn('Vibration API error:', e)
-                        }
-                    }
 
                     await handleScanResult(decodedText.trim())
                 },
@@ -149,6 +146,14 @@ export default function ScanPage() {
         }
 
         // Langsung arahkan ke halaman peminjaman — siswa akan otomatis terpilih
+        // Getar tepat sebelum berpindah halaman (konfirmasi scan berhasil)
+        if (typeof window !== 'undefined' && navigator.vibrate) {
+            try {
+                navigator.vibrate([100, 80, 200])
+            } catch (e) {
+                console.warn('Vibration API error:', e)
+            }
+        }
         router.push(`/dashboard/peminjaman?nis=${encodeURIComponent(siswa.nis)}`)
     }
 
@@ -199,8 +204,8 @@ export default function ScanPage() {
                         <div
                             className="relative rounded-2xl"
                             style={{
-                                width: 270,
-                                height: 270,
+                                width: 'min(65vmin, 270px)',
+                                height: 'min(65vmin, 270px)',
                                 boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.65)'
                             }}
                         >
