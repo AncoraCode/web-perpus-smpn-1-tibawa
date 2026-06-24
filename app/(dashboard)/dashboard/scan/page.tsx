@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Camera, CheckCircle2, AlertCircle, Loader2, User } from 'lucide-react'
-import { BrowserMultiFormatReader, NotFoundException } from '@zxing/library'
+import { Camera, AlertCircle, Loader2 } from 'lucide-react'
+import { BrowserQRCodeReader, NotFoundException } from '@zxing/library'
 import { createClient } from '@/utils/supabase/client'
 import Modal from '@/app/components/Modal'
+import { useRouter } from 'next/navigation'
 
 export default function ScanPage() {
+    const router = useRouter()
     const videoRef = useRef<HTMLVideoElement>(null)
     const [stream, setStream] = useState<MediaStream | null>(null)
     const streamRef = useRef<MediaStream | null>(null)
@@ -17,14 +19,11 @@ export default function ScanPage() {
     // Barcode/QR detection
     const [isScanning, setIsScanning] = useState(false)
     const isScanningRef = useRef(false)
-    const [detectedNis, setDetectedNis] = useState<string>('')
-    const [siswaPreview, setSiswaPreview] = useState<{ nama_lengkap: string; nis: string; kelas: string | null } | null>(null)
-    const [showSuccessModal, setShowSuccessModal] = useState(false)
     const [showErrorModal, setShowErrorModal] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
     const [isVerifying, setIsVerifying] = useState(false)
 
-    const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null)
+    const codeReaderRef = useRef<BrowserQRCodeReader | null>(null)
     const supabase = createClient()
 
     const setIsScanningState = (value: boolean) => {
@@ -126,7 +125,7 @@ export default function ScanPage() {
         setIsScanningState(true)
 
         if (!codeReaderRef.current) {
-            codeReaderRef.current = new BrowserMultiFormatReader()
+            codeReaderRef.current = new BrowserQRCodeReader()
         }
 
         codeReaderRef.current.decodeFromVideoElementContinuously(
@@ -173,7 +172,6 @@ export default function ScanPage() {
     /* ── Verifikasi hasil scan ke database ── */
     const handleScanResult = async (scannedNis: string) => {
         setIsVerifying(true)
-        setDetectedNis(scannedNis)
 
         const { data: siswa, error: fetchError } = await supabase
             .from('siswa')
@@ -195,25 +193,13 @@ export default function ScanPage() {
             return
         }
 
-        setSiswaPreview(siswa)
-        setShowSuccessModal(true)
-    }
-
-    const handleSuccessClose = () => {
-        setShowSuccessModal(false)
-        setDetectedNis('')
-        setSiswaPreview(null)
-        setTimeout(() => setIsScanningState(true), 300)
+        // Langsung arahkan ke halaman peminjaman dengan siswa yang terpilih secara otomatis
+        router.push(`/dashboard/peminjaman?nis=${encodeURIComponent(siswa.nis)}`)
     }
 
     const handleErrorClose = () => {
         setShowErrorModal(false)
         setTimeout(() => setIsScanningState(true), 300)
-    }
-
-    /* ── Redirect ke Peminjaman dengan NIS auto-select ── */
-    const handleProcessToPeminjaman = () => {
-        window.location.href = `/dashboard/peminjaman?nis=${encodeURIComponent(detectedNis)}`
     }
 
     return (
@@ -253,9 +239,9 @@ export default function ScanPage() {
 
             {!loading && !error && (
                 <>
-                    <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 10 }}>
-                        <div className="absolute inset-0 bg-black/50" />
-                        <div className="relative w-64 h-64 z-20">
+                    <div className="fixed inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 10 }}>
+                        {/* Area box pemindai dengan bayangan gelap di luarnya */}
+                        <div className="relative w-64 h-64 z-20 scanner-overlay">
                             <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-white rounded-tl-2xl" />
                             <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-white rounded-tr-2xl" />
                             <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-white rounded-bl-2xl" />
@@ -303,42 +289,6 @@ export default function ScanPage() {
                 </>
             )}
 
-            {/* Success Modal — Siswa Ditemukan */}
-            <Modal
-                isOpen={showSuccessModal}
-                onClose={handleSuccessClose}
-                title="Siswa Terdeteksi!"
-                confirmation={{
-                    negativeBtn: 'Scan Lagi',
-                    positiveBtn: 'Lanjut ke Peminjaman',
-                    handlePositiveBtn: handleProcessToPeminjaman,
-                }}
-            >
-                <div className="flex flex-col items-center py-2">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                        <User className="w-8 h-8 text-green-600" />
-                    </div>
-                    {siswaPreview && (
-                        <div className="text-center">
-                            <p className="font-bold text-gray-900 text-base">{siswaPreview.nama_lengkap}</p>
-                            <div className="flex items-center justify-center gap-2 mt-1.5">
-                                <span className="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
-                                    {siswaPreview.nis}
-                                </span>
-                                {siswaPreview.kelas && (
-                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium">
-                                        Kelas {siswaPreview.kelas}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    )}
-                    <p className="text-gray-500 text-xs mt-4 text-center">
-                        Klik "Lanjut ke Peminjaman" untuk mencatat peminjaman buku
-                    </p>
-                </div>
-            </Modal>
-
             {/* Error Modal */}
             <Modal isOpen={showErrorModal} onClose={handleErrorClose} title="QR Code Tidak Valid">
                 <div className="flex flex-col items-center py-4">
@@ -356,6 +306,9 @@ export default function ScanPage() {
                 }
                 .animate-scan {
                     animation: scan 2s ease-in-out infinite;
+                }
+                .scanner-overlay {
+                    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
                 }
             `}</style>
         </div>
