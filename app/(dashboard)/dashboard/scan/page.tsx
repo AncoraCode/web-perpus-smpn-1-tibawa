@@ -1,188 +1,120 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Camera, AlertCircle, Loader2 } from 'lucide-react'
-import { BrowserMultiFormatReader, NotFoundException, BarcodeFormat, DecodeHintType } from '@zxing/library'
+import { Camera, AlertCircle, Loader2, Flashlight } from 'lucide-react'
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import { createClient } from '@/utils/supabase/client'
 import Modal from '@/app/components/Modal'
 import { useRouter } from 'next/navigation'
 
+const SCANNER_ELEMENT_ID = 'qr-reader-element'
+
 export default function ScanPage() {
     const router = useRouter()
-    const videoRef = useRef<HTMLVideoElement>(null)
-    const [stream, setStream] = useState<MediaStream | null>(null)
-    const streamRef = useRef<MediaStream | null>(null)
     const [error, setError] = useState<string>('')
     const [loading, setLoading] = useState(true)
-    const [hasPermission, setHasPermission] = useState<boolean | null>(null)
-
-    // Barcode/QR detection
     const [isScanning, setIsScanning] = useState(false)
-    const isScanningRef = useRef(false)
+    const [isVerifying, setIsVerifying] = useState(false)
     const [showErrorModal, setShowErrorModal] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
-    const [isVerifying, setIsVerifying] = useState(false)
 
-    const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null)
+    const scannerRef = useRef<Html5Qrcode | null>(null)
+    const isScanningRef = useRef(false)
     const supabase = createClient()
 
-    const setIsScanningState = (value: boolean) => {
-        setIsScanning(value)
-        isScanningRef.current = value
-    }
-
-    const setStreamState = (newStream: MediaStream | null) => {
-        setStream(newStream)
-        streamRef.current = newStream
-    }
-
     useEffect(() => {
-        startCamera()
+        startScanner()
         return () => {
-            stopCamera()
-            stopScanning()
+            stopScanner()
         }
     }, [])
 
-    const startCamera = async () => {
+    const startScanner = async () => {
         try {
             setLoading(true)
             setError('')
 
-            // Check if secure context/mediaDevices API is available
+            // Cek secure context
             if (typeof window !== 'undefined' && (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)) {
                 throw new Error('SecureContextRequired')
             }
 
-            // Wait a brief moment to make sure videoRef is rendered
-            if (!videoRef.current) {
-                await new Promise(resolve => setTimeout(resolve, 100))
-            }
+            // Beri waktu agar DOM element siap
+            await new Promise(resolve => setTimeout(resolve, 100))
 
-            const mediaStream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: 'environment',
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                }
+            const html5Qrcode = new Html5Qrcode(SCANNER_ELEMENT_ID, {
+                formatsToSupport: [
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.CODE_39,
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.QR_CODE,
+                    Html5QrcodeSupportedFormats.DATA_MATRIX,
+                    Html5QrcodeSupportedFormats.PDF_417,
+                ],
+                verbose: false,
             })
+            scannerRef.current = html5Qrcode
 
-            setStreamState(mediaStream)
-            setHasPermission(true)
-
-            if (videoRef.current) {
-                videoRef.current.srcObject = mediaStream
-
-                // iOS Safari/Chrome requirements
-                videoRef.current.setAttribute('playsinline', 'true')
-                videoRef.current.setAttribute('muted', 'true')
-                videoRef.current.muted = true
-                videoRef.current.playsInline = true
-
-                videoRef.current.onloadedmetadata = async () => {
-                    try {
-                        await videoRef.current?.play()
-                    } catch (playError) {
-                        console.warn('Play error on loadedmetadata, retrying:', playError)
-                        setTimeout(async () => {
-                            try { await videoRef.current?.play() } catch {}
-                        }, 500)
-                    }
-                    startScanning()
+            await html5Qrcode.start(
+                { facingMode: 'environment' },
+                {
+                    fps: 15,
+                    qrbox: { width: 260, height: 260 },
+                    aspectRatio: 1.0,
+                },
+                async (decodedText) => {
+                    if (isScanningRef.current) return
+                    isScanningRef.current = true
+                    setIsScanning(false)
+                    await handleScanResult(decodedText.trim())
+                },
+                () => {
+                    // NotFoundException diabaikan — normal saat tidak ada barcode di frame
                 }
+            )
 
-                // In case it was already loaded
-                if (videoRef.current.readyState >= 2) {
-                    try {
-                        await videoRef.current.play()
-                    } catch {}
-                    startScanning()
-                }
-            }
+            setIsScanning(true)
         } catch (err: any) {
-            console.error('Error accessing camera:', err)
-            setHasPermission(false)
+            console.error('Error starting scanner:', err)
 
             if (err.message === 'SecureContextRequired') {
-                setError('Kamera hanya dapat diakses melalui koneksi aman (HTTPS) atau localhost. Jika Anda menguji di perangkat mobile secara lokal, silakan gunakan tunnel HTTPS (seperti ngrok) atau aktifkan flag secure origin pada browser Chrome.')
-            } else if (err.name === 'NotAllowedError') {
-                setError('Akses kamera ditolak. Silakan izinkan akses kamera di pengaturan browser Anda.')
-            } else if (err.name === 'NotFoundError') {
+                setError('Kamera hanya dapat diakses melalui HTTPS. Jika sedang uji coba di jaringan lokal, aktifkan flag "Insecure origins treated as secure" di Chrome atau gunakan ngrok.')
+            } else if (err.name === 'NotAllowedError' || (typeof err === 'string' && err.includes('NotAllowedError'))) {
+                setError('Akses kamera ditolak. Silakan izinkan akses kamera di pengaturan browser Anda, lalu muat ulang halaman.')
+            } else if (typeof err === 'string' && err.includes('No cameras found')) {
                 setError('Kamera tidak ditemukan pada perangkat ini.')
-            } else if (err.name === 'NotReadableError') {
-                setError('Kamera sedang digunakan oleh aplikasi lain.')
             } else {
-                setError('Gagal mengakses kamera. Pastikan browser Anda mendukung akses kamera.')
+                setError('Gagal memulai scanner. Pastikan browser Anda mendukung akses kamera.')
             }
         } finally {
             setLoading(false)
         }
     }
 
-    const startScanning = () => {
-        if (!videoRef.current || isScanningRef.current) return
-
-        setIsScanningState(true)
-
-        if (!codeReaderRef.current) {
-            // Konfigurasi hints untuk mempercepat & meningkatkan sensitivitas scan barcode
-            const hints = new Map()
-            hints.set(DecodeHintType.POSSIBLE_FORMATS, [
-                BarcodeFormat.CODE_128,
-                BarcodeFormat.CODE_39,
-                BarcodeFormat.EAN_13,
-                BarcodeFormat.EAN_8,
-                BarcodeFormat.UPC_A,
-                BarcodeFormat.QR_CODE
-            ])
-            hints.set(DecodeHintType.TRY_HARDER, true) // Menginstruksikan decoder mencari barcode secara lebih mendalam
-
-            // Parameter kedua: jeda antar percobaan scan (200ms agar pemindaian lebih responsif)
-            codeReaderRef.current = new BrowserMultiFormatReader(hints, 200)
-        }
-
-        codeReaderRef.current.decodeFromVideoElementContinuously(
-            videoRef.current,
-            async (result, err) => {
-                // Abaikan jika pemindaian sedang di-pause
-                if (!isScanningRef.current) return
-
-                if (result) {
-                    const scannedText = result.getText().trim()
-                    setIsScanningState(false) // Pause scanner
-                    await handleScanResult(scannedText)
+    const stopScanner = async () => {
+        isScanningRef.current = false
+        if (scannerRef.current) {
+            try {
+                if (scannerRef.current.isScanning) {
+                    await scannerRef.current.stop()
                 }
-
-                if (err && !(err instanceof NotFoundException)) {
-                    console.error('Scan error:', err)
-                }
-            }
-        )
-    }
-
-    const stopScanning = () => {
-        setIsScanningState(false)
-        if (codeReaderRef.current) {
-            codeReaderRef.current.reset()
-            codeReaderRef.current = null
+                scannerRef.current.clear()
+            } catch {}
+            scannerRef.current = null
         }
     }
 
-    const stopCamera = () => {
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop())
-            streamRef.current = null
-        }
-        setStream(null)
+    const handleRetry = async () => {
+        await stopScanner()
+        isScanningRef.current = false
+        setIsScanning(false)
+        setError('')
+        await startScanner()
     }
 
-    const handleRetry = () => {
-        stopCamera()
-        stopScanning()
-        startCamera()
-    }
-
-    /* ── Verifikasi hasil scan ke database ── */
+    /* ── Verifikasi NIS ke database ── */
     const handleScanResult = async (scannedNis: string) => {
         setIsVerifying(true)
 
@@ -201,42 +133,39 @@ export default function ScanPage() {
         }
 
         if (siswa.status !== 'aktif') {
-            setErrorMessage(`Siswa "${siswa.nama_lengkap}" berstatus tidak aktif.`)
+            setErrorMessage(`Siswa "${siswa.nama_lengkap}" berstatus tidak aktif (${siswa.status}).`)
             setShowErrorModal(true)
             return
         }
 
-        // Langsung arahkan ke halaman peminjaman dengan siswa yang terpilih secara otomatis
+        // Langsung arahkan ke halaman peminjaman — siswa akan otomatis terpilih
         router.push(`/dashboard/peminjaman?nis=${encodeURIComponent(siswa.nis)}`)
     }
 
     const handleErrorClose = () => {
         setShowErrorModal(false)
-        setTimeout(() => setIsScanningState(true), 300)
+        isScanningRef.current = false
+        setIsScanning(true)
     }
 
     return (
-        <div className="fixed inset-0 bg-black" style={{ marginTop: '-4rem', paddingBottom: '0' }}>
+        <div className="fixed inset-0 bg-black" style={{ marginTop: '-4rem' }}>
 
-            {/* Loading State */}
+            {/* ── Loading ── */}
             {loading && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-20">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-30">
                     <Loader2 className="w-12 h-12 text-white animate-spin mb-4" />
-                    <p className="text-white text-sm">Meminta izin akses kamera...</p>
+                    <p className="text-white text-sm">Memulai kamera...</p>
                 </div>
             )}
 
-            {/* Error State */}
+            {/* ── Error ── */}
             {error && !loading && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-20 px-6">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-30 px-6">
                     <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6 max-w-sm w-full">
                         <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                        <h3 className="text-white font-semibold text-center mb-2">
-                            Gagal Mengakses Kamera
-                        </h3>
-                        <p className="text-white/70 text-sm text-center mb-6 leading-relaxed">
-                            {error}
-                        </p>
+                        <h3 className="text-white font-semibold text-center mb-2">Gagal Mengakses Kamera</h3>
+                        <p className="text-white/70 text-sm text-center mb-6 leading-relaxed">{error}</p>
                         <button onClick={handleRetry}
                             className="w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-colors">
                             Coba Lagi
@@ -245,44 +174,49 @@ export default function ScanPage() {
                 </div>
             )}
 
-            {/* Camera Preview */}
-            <video ref={videoRef} autoPlay playsInline muted
-                className={`fixed inset-0 w-full h-full object-cover ${loading || error ? 'hidden' : ''}`}
-                style={{ zIndex: 1 }} />
+            {/* ── Elemen video (dikelola oleh html5-qrcode) ── */}
+            <div
+                id={SCANNER_ELEMENT_ID}
+                className="absolute inset-0 w-full h-full"
+                style={{ zIndex: 1 }}
+            />
 
+            {/* ── Overlay UI di atas video ── */}
             {!loading && !error && (
                 <>
-                    <div className="fixed inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 10 }}>
-                        {/* Area box pemindai persegi panjang (cocok untuk barcode & QR code) */}
-                        <div className="relative w-80 h-40 z-20 scanner-overlay">
-                            <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-white rounded-tl-2xl" />
-                            <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-white rounded-tr-2xl" />
-                            <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-white rounded-bl-2xl" />
-                            <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-white rounded-br-2xl" />
-                            {isScanning && (
-                                <div className="absolute inset-x-0 top-0 h-1 bg-primary shadow-lg shadow-primary/50 animate-scan" />
+                    {/* Bayangan gelap di luar area fokus + kotak transparan di tengah */}
+                    <div className="fixed inset-0 z-10 pointer-events-none" style={{
+                        background: 'radial-gradient(circle, transparent 135px, rgba(0,0,0,0.65) 160px)'
+                    }} />
+
+                    {/* Kotak panduan scan — persegi dengan sudut rounded */}
+                    <div className="fixed inset-0 flex items-center justify-center z-20 pointer-events-none">
+                        <div
+                            className="relative"
+                            style={{ width: 270, height: 270 }}
+                        >
+                            {/* Sudut kiri atas */}
+                            <div className="absolute top-0 left-0 w-10 h-10 border-t-[3px] border-l-[3px] border-white rounded-tl-2xl" />
+                            {/* Sudut kanan atas */}
+                            <div className="absolute top-0 right-0 w-10 h-10 border-t-[3px] border-r-[3px] border-white rounded-tr-2xl" />
+                            {/* Sudut kiri bawah */}
+                            <div className="absolute bottom-0 left-0 w-10 h-10 border-b-[3px] border-l-[3px] border-white rounded-bl-2xl" />
+                            {/* Sudut kanan bawah */}
+                            <div className="absolute bottom-0 right-0 w-10 h-10 border-b-[3px] border-r-[3px] border-white rounded-br-2xl" />
+
+                            {/* Garis scan animasi */}
+                            {(isScanning && !isVerifying) && (
+                                <div className="absolute left-2 right-2 h-0.5 bg-primary rounded shadow-[0_0_8px_2px] shadow-primary/60 animate-scan" />
                             )}
                         </div>
                     </div>
 
-                    <div className="fixed bottom-24 left-0 right-0 px-6 z-20">
-                        <div className="bg-black/70 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
-                            <p className="text-white text-center text-sm font-medium mb-1">
-                                Arahkan kamera ke Barcode kartu siswa
-                            </p>
-                            <p className="text-white/60 text-center text-xs">
-                                Pastikan Barcode terlihat jelas di dalam frame
-                            </p>
-                        </div>
-                    </div>
-
+                    {/* Status badge */}
                     <div className="fixed top-6 left-0 right-0 px-6 z-20 flex justify-center">
                         <div className={`backdrop-blur-sm rounded-xl px-4 py-2 border inline-flex items-center gap-2 ${
-                            isVerifying
-                                ? 'bg-blue-500/20 border-blue-500/30'
-                                : isScanning
-                                ? 'bg-green-500/20 border-green-500/30'
-                                : 'bg-yellow-500/20 border-yellow-500/30'
+                            isVerifying ? 'bg-blue-500/20 border-blue-500/30'
+                            : isScanning ? 'bg-green-500/20 border-green-500/30'
+                            : 'bg-yellow-500/20 border-yellow-500/30'
                         }`}>
                             {isVerifying ? (
                                 <>
@@ -293,16 +227,28 @@ export default function ScanPage() {
                                 <>
                                     <Camera className={`w-4 h-4 ${isScanning ? 'text-green-400' : 'text-yellow-400'}`} />
                                     <span className={`text-xs font-medium ${isScanning ? 'text-green-400' : 'text-yellow-400'}`}>
-                                        {isScanning ? 'Scanner Aktif' : 'Scanner Siap'}
+                                        {isScanning ? 'Scanner Aktif' : 'Mempersiapkan...'}
                                     </span>
                                 </>
                             )}
                         </div>
                     </div>
+
+                    {/* Petunjuk bawah */}
+                    <div className="fixed bottom-24 left-0 right-0 px-6 z-20">
+                        <div className="bg-black/70 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+                            <p className="text-white text-center text-sm font-medium mb-1">
+                                Arahkan kamera ke Barcode kartu siswa
+                            </p>
+                            <p className="text-white/50 text-center text-xs">
+                                Pastikan Barcode terlihat jelas dan pas di dalam kotak
+                            </p>
+                        </div>
+                    </div>
                 </>
             )}
 
-            {/* Error Modal */}
+            {/* ── Error Modal ── */}
             <Modal isOpen={showErrorModal} onClose={handleErrorClose} title="Barcode Tidak Valid">
                 <div className="flex flex-col items-center py-4">
                     <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
@@ -312,16 +258,31 @@ export default function ScanPage() {
                 </div>
             </Modal>
 
-            <style jsx>{`
+            <style jsx global>{`
+                /* Sembunyikan UI bawaan html5-qrcode */
+                #${SCANNER_ELEMENT_ID} video {
+                    width: 100% !important;
+                    height: 100% !important;
+                    object-fit: cover !important;
+                    position: absolute !important;
+                    inset: 0 !important;
+                }
+                #${SCANNER_ELEMENT_ID} img,
+                #${SCANNER_ELEMENT_ID} canvas {
+                    display: none !important;
+                }
+                #${SCANNER_ELEMENT_ID} > div:not(:has(video)) {
+                    display: none !important;
+                }
+
                 @keyframes scan {
-                    0%, 100% { top: 0; }
-                    50% { top: calc(100% - 4px); }
+                    0%   { top: 10px; }
+                    50%  { top: calc(100% - 10px); }
+                    100% { top: 10px; }
                 }
                 .animate-scan {
-                    animation: scan 2s ease-in-out infinite;
-                }
-                .scanner-overlay {
-                    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+                    animation: scan 2.5s ease-in-out infinite;
+                    position: absolute;
                 }
             `}</style>
         </div>
