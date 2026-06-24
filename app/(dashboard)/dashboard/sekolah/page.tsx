@@ -3,6 +3,8 @@ import { getUserFromCookie } from '@/utils/get-user'
 import { createClient } from '@/utils/supabase/server'
 import SekolahClient from './SekolahClient'
 
+export const dynamic = 'force-dynamic'
+
 async function getSekolahData() {
     try {
         const supabase = await createClient()

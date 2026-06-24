@@ -145,18 +145,22 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
 
             if (initialData?.id) {
                 // Update existing record
-                const { error } = await supabase
+                const { data, error } = await supabase
                     .from('detail_sekolah')
                     .update(payload)
                     .eq('id', initialData.id)
+                    .select()
+                    .single()
 
                 if (error) throw error
                 showNotif(true, 'Detail Sekolah berhasil diperbarui!')
             } else {
                 // Insert new record
-                const { error } = await supabase
+                const { data, error } = await supabase
                     .from('detail_sekolah')
                     .insert([payload])
+                    .select()
+                    .single()
 
                 if (error) throw error
                 showNotif(true, 'Detail Sekolah berhasil ditambahkan!')
