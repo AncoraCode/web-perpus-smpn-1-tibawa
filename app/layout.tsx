@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "@/app/globals.css";
 {/* Libs */ }
 import { createClient } from "@/utils/supabase/server";
+import { getUserFromCookie } from "@/utils/get-user";
 {/* Libs End */ }
 {/* Components */ }
 import GeneralLayout from "@/app/components/GeneralLayout";
@@ -16,8 +17,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await getUserFromCookie();
+
   return (
-    <GeneralLayout>
+    <GeneralLayout user={user}>
       {children}
     </GeneralLayout>
   );

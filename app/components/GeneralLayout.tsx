@@ -3,7 +3,7 @@ import NextTopLoader from 'nextjs-toploader';
 import AOSInit from "./AOSInit";
 import BottomNav from "./BottomNav";
 
-export default function GeneralLayout({ children }: { children: React.ReactNode }) {
+export default function GeneralLayout({ children, user }: { children: React.ReactNode, user?: any }) {
     return (
         <html lang="id" className="scroll-smooth">
             <head>
@@ -37,7 +37,7 @@ export default function GeneralLayout({ children }: { children: React.ReactNode 
                     <main className="flex-1 pb-16">
                         {children}
                     </main>
-                    <BottomNav />
+                    <BottomNav user={user} />
                 </div>
             </body>
         </html>

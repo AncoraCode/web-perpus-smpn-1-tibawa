@@ -1,6 +1,42 @@
 import { School, Hash, User, Phone, Mail, MapPin } from 'lucide-react'
+import { createClient } from '@/utils/supabase/server'
 
-export default function DetailSekolahPage() {
+async function getSekolahData() {
+    try {
+        const supabase = await createClient()
+        const { data, error } = await supabase
+            .from('detail_sekolah')
+            .select('*')
+            .limit(1)
+            .maybeSingle()
+
+        if (error) {
+            console.error('Error fetching detail sekolah:', error)
+            return null
+        }
+        return data || null
+    } catch (error) {
+        console.error('Error in getSekolahData:', error)
+        return null
+    }
+}
+
+export default async function DetailSekolahPage() {
+    const detailSekolah = await getSekolahData()
+
+    // Fallback data statis
+    const namaSekolah = detailSekolah?.nama_sekolah || 'SMP Negeri 1 Tibawa'
+    const kecamatanKabupaten = detailSekolah?.kecamatan_kabupaten || 'Kecamatan Tibawa, Kabupaten Gorontalo'
+    const logoUrl = detailSekolah?.logo_url || '/assets/img/logo-sekolah.png'
+    const bannerUrl = detailSekolah?.foto_header_url || '/assets/img/sekolah2.jpg'
+    const tentangSekolah = detailSekolah?.tentang_sekolah || 'SMP Negeri 1 Tibawa adalah institusi pendidikan menengah pertama yang berdedikasi untuk menciptakan generasi cerdas, berkarakter, dan berdaya saing di wilayah Kecamatan Tibawa. Terakreditasi A, sekolah kami mengedepankan inovasi pembelajaran dan penguatan nilai-nilai budi pekerti guna mencetak siswa yang unggul dalam prestasi akademik maupun non-akademik.'
+    const npsn = detailSekolah?.npsn || '40500377'
+    const kepalaSekolah = detailSekolah?.kepala_sekolah || 'Rosma Isa, M.Pd'
+    const telepon = detailSekolah?.telepon || '+62 812 3456789'
+    const email = detailSekolah?.email || 'smpn01tbw@gmail.com'
+    const alamat = detailSekolah?.alamat || 'Jl. Trans Sulawesi No. 1, Kec. Tibawa, Kab. Gorontalo'
+    const mapIframeUrl = detailSekolah?.map_iframe_url || 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.566515511985!2d122.8631618!3d0.6437176000000001!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x32793adfdcf79c89%3A0x7c66393058383b66!2sSMPN%20Negeri%201%20Tibawa!5e0!3m2!1sid!2sid!4v1775615861256!5m2!1sid!2sid'
+
     return (
         <div className="flex flex-col bg-gray-50 min-h-screen">
 
@@ -8,27 +44,22 @@ export default function DetailSekolahPage() {
             <header className="relative bg-primary overflow-hidden">
                 <div className="absolute inset-0">
                     <img
-                        src="/assets/img/sekolah2.jpg"
-                        alt="SMP Negeri 1 Tibawa"
+                        src={bannerUrl}
+                        alt={namaSekolah}
                         className="w-full h-full object-cover opacity-20"
                     />
                     <div className="absolute inset-0 bg-primary/60" />
                 </div>
                 <div className="relative z-10 flex flex-col items-center justify-center py-10 px-4 text-center">
-                    <div className="rounded-full flex items-center justify-center mb-1 overflow-hidden">
+                    <div className="rounded-full flex items-center justify-center mb-1 overflow-hidden bg-white/10 p-1 border border-white/10">
                         <img
-                            src="/assets/img/logo-sekolah.png"
-                            alt="Logo SMPN 1 Tibawa"
-                            className="w-24 h-24 object-contain"
-                            // onError={(e) => {
-                            //     const el = e.target as HTMLImageElement
-                            //     el.style.display = 'none'
-                            //     el.parentElement!.innerHTML = '<div class="text-white/50 text-2xl font-bold">S</div>'
-                            // }}
+                            src={logoUrl}
+                            alt={`Logo ${namaSekolah}`}
+                            className="w-20 h-20 object-contain"
                         />
                     </div>
-                    <h1 className="text-white font-semibold text-3xl">SMP Negeri 1 Tibawa</h1>
-                    <p className="text-white/60 text-xs mt-1">Kecamatan Tibawa, Kabupaten Gorontalo</p>
+                    <h1 className="text-white font-semibold text-3xl">{namaSekolah}</h1>
+                    <p className="text-white/60 text-xs mt-1">{kecamatanKabupaten}</p>
                 </div>
             </header>
 
@@ -49,10 +80,7 @@ export default function DetailSekolahPage() {
                     </div>
                     <h3 className="font-semibold text-gray-900 text-sm mb-2">Tentang Sekolah</h3>
                     <p className="text-gray-500 text-xs leading-relaxed text-justify">
-                        SMP Negeri 1 Tibawa adalah institusi pendidikan menengah pertama yang berdedikasi untuk
-                        menciptakan generasi cerdas, berkarakter, dan berdaya saing di wilayah Kecamatan Tibawa.
-                        Terakreditasi A, sekolah kami mengedepankan inovasi pembelajaran dan penguatan nilai-nilai
-                        budi pekerti guna mencetak siswa yang unggul dalam prestasi akademik maupun non-akademik.
+                        {tentangSekolah}
                     </p>
                 </div>
 
@@ -66,7 +94,7 @@ export default function DetailSekolahPage() {
                         </div>
                         <div>
                             <p className="text-[10px] font-semibold text-accent uppercase tracking-wide">NPSN</p>
-                            <p className="text-sm font-medium text-gray-800">40500377</p>
+                            <p className="text-sm font-medium text-gray-800">{npsn}</p>
                         </div>
                     </div>
 
@@ -77,7 +105,7 @@ export default function DetailSekolahPage() {
                         </div>
                         <div>
                             <p className="text-[10px] font-semibold text-amber-500 uppercase tracking-wide">Kepala Sekolah</p>
-                            <p className="text-sm font-medium text-gray-800">Rosma Isa, M.Pd</p>
+                            <p className="text-sm font-medium text-gray-800">{kepalaSekolah}</p>
                         </div>
                     </div>
 
@@ -88,8 +116,8 @@ export default function DetailSekolahPage() {
                         </div>
                         <div>
                             <p className="text-[10px] font-semibold text-purple-500 uppercase tracking-wide">Telepon</p>
-                            <a href="tel:+628123456789" className="text-sm font-medium text-gray-800 hover:text-accent transition-colors">
-                                +62 812 3456789
+                            <a href={`tel:${telepon.replace(/\s+/g, '')}`} className="text-sm font-medium text-gray-800 hover:text-accent transition-colors">
+                                {telepon}
                             </a>
                         </div>
                     </div>
@@ -101,38 +129,40 @@ export default function DetailSekolahPage() {
                         </div>
                         <div>
                             <p className="text-[10px] font-semibold text-red-500 uppercase tracking-wide">Email</p>
-                            <a href="mailto:smpn1tibawa@gmail.com" className="text-sm font-medium text-gray-800 hover:text-accent transition-colors">
-                                smpn01tbw@gmail.com
+                            <a href={`mailto:${email}`} className="text-sm font-medium text-gray-800 hover:text-accent transition-colors">
+                                {email}
                             </a>
                         </div>
                     </div>
 
                     {/* Lokasi + Peta */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
                         <div className="px-4 py-3 flex items-start gap-4">
                             <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
                                 <MapPin className="w-5 h-5 text-accent" />
                             </div>
                             <div>
                                 <p className="text-[10px] font-semibold text-accent uppercase tracking-wide">Lokasi</p>
-                                <p className="text-sm font-medium text-gray-800 leading-snug">
-                                    Jl. Trans Sulawesi No. 1, Kec. Tibawa,<br />Kab. Gorontalo
+                                <p className="text-sm font-medium text-gray-800 leading-snug whitespace-pre-line">
+                                    {alamat}
                                 </p>
                             </div>
                         </div>
                         {/* Peta */}
-                        <div className="h-44 bg-gray-100">
-                            <iframe
-                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.566515511985!2d122.8631618!3d0.6437176000000001!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x32793adfdcf79c89%3A0x7c66393058383b66!2sSMPN%20Negeri%201%20Tibawa!5e0!3m2!1sid!2sid!4v1775615861256!5m2!1sid!2sid"
-                                width="100%"
-                                height="100%"
-                                style={{ border: 0 }}
-                                allowFullScreen
-                                loading="lazy"
-                                referrerPolicy="no-referrer-when-downgrade"
-                                title="Lokasi SMPN 1 Tibawa"
-                            />
-                        </div>
+                        {mapIframeUrl && (
+                            <div className="h-44 bg-gray-100">
+                                <iframe
+                                    src={mapIframeUrl}
+                                    width="100%"
+                                    height="100%"
+                                    style={{ border: 0 }}
+                                    allowFullScreen
+                                    loading="lazy"
+                                    referrerPolicy="no-referrer-when-downgrade"
+                                    title={`Lokasi ${namaSekolah}`}
+                                />
+                            </div>
+                        )}
                     </div>
 
                 </div>

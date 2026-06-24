@@ -2,16 +2,24 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, School, LogIn } from 'lucide-react'
+import { Home, School, LogIn, LayoutDashboard } from 'lucide-react'
 
-const navItems = [
-    { label: 'Beranda', href: '/', icon: Home },
-    { label: 'Detail Sekolah', href: '/detail', icon: School },
-    { label: 'Login', href: '/login', icon: LogIn },
-]
+interface BottomNavProps {
+    user?: any
+}
 
-export default function BottomNav() {
+export default function BottomNav({ user }: BottomNavProps) {
     const pathname = usePathname()
+
+    const navItems = [
+        { label: 'Beranda', href: '/', icon: Home },
+        { label: 'Detail Sekolah', href: '/detail', icon: School },
+        { 
+            label: user ? 'Dashboard' : 'Login', 
+            href: user ? '/dashboard' : '/login', 
+            icon: user ? LayoutDashboard : LogIn 
+        },
+    ]
 
     const isActive = (href: string) => {
         if (href === '/') return pathname === '/'

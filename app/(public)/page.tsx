@@ -45,6 +45,13 @@ async function getLandingData() {
             .eq('role', 'guru')
             .limit(3)
 
+        // Detail Sekolah
+        const { data: detailSekolah } = await supabase
+            .from('detail_sekolah')
+            .select('*')
+            .limit(1)
+            .maybeSingle()
+
         return {
             stats: {
                 totalBuku: totalBuku || 0,
@@ -53,19 +60,27 @@ async function getLandingData() {
             },
             bukuTerlaris: bukuTerlaris || [],
             penanggungjawab: penanggungjawab || [],
+            detailSekolah: detailSekolah || null,
         }
     } catch (error) {
         console.error('Error fetching landing data:', error)
         return {
             stats: { totalBuku: 0, totalSiswa: 0, peminjamanAktif: 0 },
             bukuTerlaris: [],
-            penanggungjawab: []
+            penanggungjawab: [],
+            detailSekolah: null
         }
     }
 }
 
 export default async function BerandaPage() {
-    const { stats, bukuTerlaris, penanggungjawab } = await getLandingData()
+    const { stats, bukuTerlaris, penanggungjawab, detailSekolah } = await getLandingData()
+
+    // Fallback data statis jika detailSekolah belum dikonfigurasi
+    const namaSekolah = detailSekolah?.nama_sekolah || 'SMP Negeri 1 Tibawa'
+    const kecamatanKabupaten = detailSekolah?.kecamatan_kabupaten || 'Kecamatan Tibawa, Kabupaten Gorontalo'
+    const logoUrl = detailSekolah?.logo_url || '/assets/img/logo-sekolah.png'
+    const bannerUrl = detailSekolah?.foto_header_url || '/assets/img/perpus.jpg'
 
     return (
         <div className="flex flex-col bg-gray-50 min-h-screen">
@@ -75,8 +90,8 @@ export default async function BerandaPage() {
                 {/* Foto sekolah background */}
                 <div className="absolute inset-0">
                     <img
-                        src="/assets/img/perpus.jpg"
-                        alt="SMP Negeri 1 Tibawa"
+                        src={bannerUrl}
+                        alt={namaSekolah}
                         className="w-full h-full object-cover opacity-15"
                     />
                 </div>
@@ -84,11 +99,11 @@ export default async function BerandaPage() {
                 <div className="relative z-10 px-4 pt-4 pb-6">
                     {/* Logo + Bendera kecil di kiri atas */}
                     <div className="flex items-center gap-2 mb-5">
-                        <div className="w-10 h-10 rounded-full overflow-hidden">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-white/10 flex items-center justify-center p-0.5 border border-white/10">
                             <img
-                                src="/assets/img/logo-sekolah.png"
+                                src={logoUrl}
                                 alt="Logo"
-                                className="w-10 h-10 object-contain"
+                                className="w-9 h-9 object-contain"
                             />
                         </div>
                     </div>
@@ -102,11 +117,18 @@ export default async function BerandaPage() {
                     </div>
 
                     {/* Judul */}
-                    <h1 className="text-white font-bold text-2xl leading-snug mb-1">
-                        PERPUSTAKAAN BOUGENVILLE<br />SMPN 1 TIBAWA
+                    <h1 className="text-white font-bold text-2xl leading-snug mb-1 uppercase">
+                        {namaSekolah.toUpperCase().includes('PERPUSTAKAAN') ? (
+                            namaSekolah
+                        ) : (
+                            <>
+                                PERPUSTAKAAN BOUGENVILLE<br />
+                                {namaSekolah}
+                            </>
+                        )}
                     </h1>
                     <p className="text-white/60 text-xs">
-                        Kecamatan Tibawa, Kabupaten Gorontalo
+                        {kecamatanKabupaten}
                     </p>
                 </div>
             </header>
