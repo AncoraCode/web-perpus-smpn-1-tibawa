@@ -1,6 +1,8 @@
 import { School, Hash, User, Phone, Mail, MapPin } from 'lucide-react'
 import { createClient } from '@/utils/supabase/server'
 
+export const dynamic = 'force-dynamic'
+
 async function getSekolahData() {
     try {
         const supabase = await createClient()

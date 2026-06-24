@@ -2,6 +2,8 @@ import { BookOpen, TrendingUp, Info, Users, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
 
+export const dynamic = 'force-dynamic'
+
 const TIM_PENGEMBANG = [
     { nama: 'Moh. Wahyu S Tamuu', nim: 'NIM: 532423033', foto: '/assets/img/tim/532423033.png' },
     { nama: 'Arman Mursali', nim: 'NIM: 532423079', foto: '/assets/img/tim/532423079.png' },
