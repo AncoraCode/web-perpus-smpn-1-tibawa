@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Camera, AlertCircle, Loader2 } from 'lucide-react'
-import { BrowserMultiFormatReader, NotFoundException } from '@zxing/library'
+import { BrowserMultiFormatReader, NotFoundException, BarcodeFormat, DecodeHintType } from '@zxing/library'
 import { createClient } from '@/utils/supabase/client'
 import Modal from '@/app/components/Modal'
 import { useRouter } from 'next/navigation'
@@ -125,18 +125,31 @@ export default function ScanPage() {
         setIsScanningState(true)
 
         if (!codeReaderRef.current) {
-            codeReaderRef.current = new BrowserMultiFormatReader()
+            // Konfigurasi hints untuk mempercepat & meningkatkan sensitivitas scan barcode
+            const hints = new Map()
+            hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+                BarcodeFormat.CODE_128,
+                BarcodeFormat.CODE_39,
+                BarcodeFormat.EAN_13,
+                BarcodeFormat.EAN_8,
+                BarcodeFormat.UPC_A,
+                BarcodeFormat.QR_CODE
+            ])
+            hints.set(DecodeHintType.TRY_HARDER, true) // Menginstruksikan decoder mencari barcode secara lebih mendalam
+
+            // Parameter kedua: jeda antar percobaan scan (200ms agar pemindaian lebih responsif)
+            codeReaderRef.current = new BrowserMultiFormatReader(hints, 200)
         }
 
         codeReaderRef.current.decodeFromVideoElementContinuously(
             videoRef.current,
             async (result, err) => {
-                // Ignore scanning callbacks if scanner is currently paused
+                // Abaikan jika pemindaian sedang di-pause
                 if (!isScanningRef.current) return
 
                 if (result) {
                     const scannedText = result.getText().trim()
-                    setIsScanningState(false) // Pause scanner actions
+                    setIsScanningState(false) // Pause scanner
                     await handleScanResult(scannedText)
                 }
 
@@ -240,8 +253,8 @@ export default function ScanPage() {
             {!loading && !error && (
                 <>
                     <div className="fixed inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 10 }}>
-                        {/* Area box pemindai dengan bayangan gelap di luarnya */}
-                        <div className="relative w-64 h-64 z-20 scanner-overlay">
+                        {/* Area box pemindai persegi panjang (cocok untuk barcode & QR code) */}
+                        <div className="relative w-80 h-40 z-20 scanner-overlay">
                             <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-white rounded-tl-2xl" />
                             <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-white rounded-tr-2xl" />
                             <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-white rounded-bl-2xl" />
@@ -280,7 +293,7 @@ export default function ScanPage() {
                                 <>
                                     <Camera className={`w-4 h-4 ${isScanning ? 'text-green-400' : 'text-yellow-400'}`} />
                                     <span className={`text-xs font-medium ${isScanning ? 'text-green-400' : 'text-yellow-400'}`}>
-                                        {isScanning ? 'Scanner' : 'Scanner Siap'}
+                                        {isScanning ? 'Scanner Aktif' : 'Scanner Siap'}
                                     </span>
                                 </>
                             )}
