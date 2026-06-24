@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Camera, AlertCircle, Loader2 } from 'lucide-react'
-import { BrowserQRCodeReader, NotFoundException } from '@zxing/library'
+import { BrowserMultiFormatReader, NotFoundException } from '@zxing/library'
 import { createClient } from '@/utils/supabase/client'
 import Modal from '@/app/components/Modal'
 import { useRouter } from 'next/navigation'
@@ -23,7 +23,7 @@ export default function ScanPage() {
     const [errorMessage, setErrorMessage] = useState('')
     const [isVerifying, setIsVerifying] = useState(false)
 
-    const codeReaderRef = useRef<BrowserQRCodeReader | null>(null)
+    const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null)
     const supabase = createClient()
 
     const setIsScanningState = (value: boolean) => {
@@ -125,7 +125,7 @@ export default function ScanPage() {
         setIsScanningState(true)
 
         if (!codeReaderRef.current) {
-            codeReaderRef.current = new BrowserQRCodeReader()
+            codeReaderRef.current = new BrowserMultiFormatReader()
         }
 
         codeReaderRef.current.decodeFromVideoElementContinuously(
@@ -255,10 +255,10 @@ export default function ScanPage() {
                     <div className="fixed bottom-24 left-0 right-0 px-6 z-20">
                         <div className="bg-black/70 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
                             <p className="text-white text-center text-sm font-medium mb-1">
-                                Arahkan kamera ke QR Code kartu siswa
+                                Arahkan kamera ke Barcode kartu siswa
                             </p>
                             <p className="text-white/60 text-center text-xs">
-                                Pastikan QR Code terlihat jelas di dalam frame
+                                Pastikan Barcode terlihat jelas di dalam frame
                             </p>
                         </div>
                     </div>
@@ -280,7 +280,7 @@ export default function ScanPage() {
                                 <>
                                     <Camera className={`w-4 h-4 ${isScanning ? 'text-green-400' : 'text-yellow-400'}`} />
                                     <span className={`text-xs font-medium ${isScanning ? 'text-green-400' : 'text-yellow-400'}`}>
-                                        {isScanning ? 'Scanner Aktif' : 'Scanner Siap'}
+                                        {isScanning ? 'Scanner' : 'Scanner Siap'}
                                     </span>
                                 </>
                             )}
@@ -290,7 +290,7 @@ export default function ScanPage() {
             )}
 
             {/* Error Modal */}
-            <Modal isOpen={showErrorModal} onClose={handleErrorClose} title="QR Code Tidak Valid">
+            <Modal isOpen={showErrorModal} onClose={handleErrorClose} title="Barcode Tidak Valid">
                 <div className="flex flex-col items-center py-4">
                     <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
                         <AlertCircle className="w-8 h-8 text-red-600" />
