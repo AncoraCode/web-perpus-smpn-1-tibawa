@@ -1,5 +1,5 @@
 import { ListSkeleton } from '@/app/components/Skeleton'
 
 export default function Loading() {
-    return <ListSkeleton title="Kelola Siswa" subtitle="Manajemen data anggota siswa perpustakaan" />
+    return <ListSkeleton title="Data Siswa" subtitle="Kelola data siswa sekolah" />
 }

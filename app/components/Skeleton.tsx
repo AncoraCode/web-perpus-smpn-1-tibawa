@@ -114,20 +114,17 @@ export function FormSkeleton({ title, subtitle }: { title?: string; subtitle?: s
     return (
         <div className="container mx-auto px-4 py-6 max-w-xl space-y-6">
             {/* Header */}
-            <div className="flex items-center gap-3">
-                <SkeletonPulse className="w-10 h-10 rounded-xl flex-shrink-0" />
-                <div className="space-y-1.5 flex-1">
-                    {title ? (
-                        <h1 className="text-lg font-bold text-gray-900 leading-tight">{title}</h1>
-                    ) : (
-                        <SkeletonPulse className="h-5 w-40" />
-                    )}
-                    {subtitle ? (
-                        <p className="text-xs text-gray-500">{subtitle}</p>
-                    ) : (
-                        <SkeletonPulse className="h-3 w-60" />
-                    )}
-                </div>
+            <div className="space-y-2">
+                {title ? (
+                    <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+                ) : (
+                    <SkeletonPulse className="h-7 w-40" />
+                )}
+                {subtitle ? (
+                    <p className="text-sm text-gray-500">{subtitle}</p>
+                ) : (
+                    <SkeletonPulse className="h-4 w-60" />
+                )}
             </div>
 
             {/* Media Upload Box */}
