@@ -562,15 +562,15 @@ export default function BukuClient({ bukuData, kategoriList, rakList, user }: Bu
     return (
         <div className="px-4 py-6 space-y-5">
 
-            {/* Hidden cover input */}
-            <input ref={coverInputRef} type="file" accept="image/jpeg,image/png,image/webp"
-                className="hidden" onChange={handleCoverFileChange} />
-
             {/* Header */}
             <div>
                 <h1 className="text-xl font-bold text-gray-900">Koleksi Buku</h1>
                 <p className="text-sm text-gray-500 mt-0.5">Kelola data koleksi buku perpustakaan</p>
             </div>
+            
+            {/* Hidden cover input */}
+            <input ref={coverInputRef} type="file" accept="image/jpeg,image/png,image/webp"
+                className="hidden" onChange={handleCoverFileChange} />
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-2">
