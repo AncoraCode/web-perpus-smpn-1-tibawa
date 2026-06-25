@@ -266,6 +266,22 @@ export default async function BerandaPage() {
                     </div>
 
                     <div className="bg-primary bg-gradient-to-br from-primary to-primary2 rounded-2xl p-4">
+                        <div className="flex items-center gap-3 mb-3.5 pb-3 border-b border-white/10">
+                            <img
+                                src="/assets/img/logo-batch9.png"
+                                alt="Logo UNG Mengajar Batch 9"
+                                className="w-12 h-12 object-contain bg-white/10 p-1.5 rounded-xl border border-white/10"
+                            />
+                            <div>
+                                <p className="text-white font-bold text-sm leading-tight">
+                                    UNG Mengajar Batch 9
+                                </p>
+                                <p className="text-white/60 text-[10px] mt-0.5 font-medium tracking-wide uppercase">
+                                    Teknik Informatika
+                                </p>
+                            </div>
+                        </div>
+
                         <p className="text-white/80 text-xs leading-relaxed text-justify mb-1">
                             Website ini merupakan hasil Program Kerja dari{' '}
                             <span className="text-white font-semibold">
