@@ -5,23 +5,82 @@ import NextTopLoader from 'nextjs-toploader';
 import AOSInit from "@/app/components/AOSInit";
 
 export async function generateMetadata(): Promise<Metadata> {
+  const defaultTitle = 'Perpustakaan Bougenville - SMPN 1 Tibawa';
+  const defaultDescription = 'Sistem Informasi Perpustakaan Terintegrasi untuk mengelola peminjaman, pengembalian, dan katalog buku secara digital.';
+  const defaultBanner = '/assets/img/perpus.jpg';
+  
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+                  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '') ||
+                  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
+                  'http://localhost:3000';
+
   try {
     const supabase = await createClient()
     const { data } = await supabase
       .from('detail_sekolah')
-      .select('nama_perpustakaan, nama_sekolah')
+      .select('nama_perpustakaan, nama_sekolah, tentang_sekolah, logo_url, foto_header_url')
       .limit(1)
       .maybeSingle()
 
     const namaPerpustakaan = data?.nama_perpustakaan || 'Perpustakaan Bougenville'
     const namaSekolah = data?.nama_sekolah || 'SMPN 1 Tibawa'
+    const title = `${namaPerpustakaan} - ${namaSekolah}`
+    const description = data?.tentang_sekolah || defaultDescription
+    const bannerUrl = data?.foto_header_url || data?.logo_url || defaultBanner
 
     return {
-      title: `${namaPerpustakaan} - ${namaSekolah}`,
+      title,
+      description,
+      metadataBase: new URL(baseUrl),
+      openGraph: {
+        title,
+        description,
+        url: '/',
+        siteName: namaPerpustakaan,
+        images: [
+          {
+            url: bannerUrl,
+            width: 1200,
+            height: 630,
+            alt: title,
+          }
+        ],
+        locale: 'id_ID',
+        type: 'website',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: [bannerUrl],
+      },
     }
   } catch {
     return {
-      title: 'Perpustakaan Bougenville SMPN 1 Tibawa',
+      title: defaultTitle,
+      description: defaultDescription,
+      metadataBase: new URL(baseUrl),
+      openGraph: {
+        title: defaultTitle,
+        description: defaultDescription,
+        url: '/',
+        images: [
+          {
+            url: defaultBanner,
+            width: 1200,
+            height: 630,
+            alt: defaultTitle,
+          }
+        ],
+        locale: 'id_ID',
+        type: 'website',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: defaultTitle,
+        description: defaultDescription,
+        images: [defaultBanner],
+      },
     }
   }
 }
