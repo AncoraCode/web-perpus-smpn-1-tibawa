@@ -270,13 +270,13 @@ export default async function BerandaPage() {
                             <img
                                 src="/assets/img/logo-batch9.png"
                                 alt="Logo UNG Mengajar Batch 9"
-                                className="w-12 h-12 object-contain bg-white/10 p-1.5 rounded-xl border border-white/10"
+                                className="w-12 h-12 object-contain"
                             />
                             <div>
-                                <p className="text-white font-bold text-sm leading-tight">
-                                    UNG Mengajar Batch 9
+                                <p className="text-white font-bold text-xs leading-tight uppercase tracking-wide">
+                                    UNG MENGAJAR BATCH 9
                                 </p>
-                                <p className="text-white/60 text-[10px] mt-0.5 font-medium tracking-wide uppercase">
+                                <p className="text-white/70 text-[10px] mt-0.5 font-medium">
                                     Teknik Informatika
                                 </p>
                             </div>
