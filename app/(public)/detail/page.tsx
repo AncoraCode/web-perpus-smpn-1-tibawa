@@ -53,13 +53,11 @@ export default async function DetailSekolahPage() {
                     <div className="absolute inset-0 bg-primary/60" />
                 </div>
                 <div className="relative z-10 flex flex-col items-center justify-center py-10 px-4 text-center">
-                    <div className="rounded-full flex items-center justify-center mb-1 overflow-hidden bg-white/10 p-1 border border-white/10">
-                        <img
-                            src={logoUrl}
-                            alt={`Logo ${namaSekolah}`}
-                            className="w-20 h-20 object-contain"
-                        />
-                    </div>
+                    <img
+                        src={logoUrl}
+                        alt={`Logo ${namaSekolah}`}
+                        className="w-20 h-20 object-contain mb-2"
+                    />
                     <h1 className="text-white font-semibold text-3xl">{namaSekolah}</h1>
                     <p className="text-white/60 text-xs mt-1">{kecamatanKabupaten}</p>
                 </div>

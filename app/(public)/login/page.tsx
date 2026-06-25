@@ -75,13 +75,11 @@ export default function LoginPage() {
 
                 {/* Logo + Judul */}
                 <div className="flex flex-col items-center mb-8">
-                    <div className="rounded-full flex items-center justify-center mb-2 overflow-hidden">
-                        <img
-                            src={sekolah?.logo_url || "/assets/img/logo-sekolah.png"}
-                            alt="Logo SMPN 1 Tibawa"
-                            className="w-24 h-24 object-contain"
-                        />
-                    </div>
+                    <img
+                        src={sekolah?.logo_url || "/assets/img/logo-sekolah.png"}
+                        alt="Logo SMPN 1 Tibawa"
+                        className="w-24 h-24 object-contain mb-2"
+                    />
                     <h1 className="text-white font-semibold text-2xl mb-1">Login</h1>
                     <p className="text-white/60 text-sm">Login untuk akses Dashboard</p>
                 </div>

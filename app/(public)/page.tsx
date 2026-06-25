@@ -101,13 +101,11 @@ export default async function BerandaPage() {
                 <div className="relative z-10 px-4 pt-4 pb-6">
                     {/* Logo + Bendera kecil di kiri atas */}
                     <div className="flex items-center gap-2 mb-5">
-                        <div className="w-10 h-10 rounded-full overflow-hidden bg-white/10 flex items-center justify-center p-0.5 border border-white/10">
-                            <img
-                                src={logoUrl}
-                                alt="Logo"
-                                className="w-9 h-9 object-contain"
-                            />
-                        </div>
+                        <img
+                            src={logoUrl}
+                            alt="Logo"
+                            className="w-10 h-10 object-contain"
+                        />
                     </div>
 
                     {/* Badge */}
