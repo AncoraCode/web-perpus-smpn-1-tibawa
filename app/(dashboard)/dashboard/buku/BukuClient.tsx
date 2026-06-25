@@ -354,7 +354,7 @@ export default function BukuClient({ bukuData, kategoriList, rakList, user }: Bu
     const stats = useMemo(() => ({
         total: bukuList.length,
         tersedia: bukuList.reduce((s, b) => s + (b.jumlah_tersedia || 0), 0),
-        dipinjam: bukuList.reduce((s, b) => s + ((b.jumlah_total || 0) - (b.jumlah_tersedia || 0)), 0),
+        dipinjam: bukuList.reduce((s, b) => s + Math.max(0, (b.jumlah_total || 0) - (b.jumlah_tersedia || 0)), 0),
     }), [bukuList])
 
     /* ── helpers ── */
