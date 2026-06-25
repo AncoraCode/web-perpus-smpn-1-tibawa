@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import {
-    Search, Plus, Edit2, Trash2, BookOpen,
+    Search, Plus, Edit2, Trash2, BookOpen, FileText,
     CheckCircle2, XCircle, X, Package,
     Layers, Grid3x3, Hash, User, Building2,
     Calendar, Barcode, BookMarked, ImagePlus, Loader2,
@@ -312,6 +312,7 @@ export default function BukuClient({ bukuData, kategoriList, rakList, user }: Bu
     const [coverFile, setCoverFile] = useState<File | null>(null)
     const [coverPreview, setCoverPreview] = useState<string | null>(null)
     const [isUploadingCover, setIsUploadingCover] = useState(false)
+    const [previewCoverUrl, setPreviewCoverUrl] = useState<string | null>(null)
 
     const supabase = createClient()
 
@@ -722,6 +723,12 @@ export default function BukuClient({ bukuData, kategoriList, rakList, user }: Bu
 
                                     {/* Actions */}
                                     <div className="flex gap-2">
+                                        <button onClick={() => openDetail(b)}
+                                            className="px-3 py-2 bg-gray-50 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-100 transition-colors flex items-center justify-center"
+                                            title="Detail"
+                                        >
+                                            <FileText className="w-3.5 h-3.5" />
+                                        </button>
                                         <button onClick={() => openEdit(b)}
                                             className="flex-1 py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-100 transition-colors flex items-center justify-center gap-1">
                                             <Edit2 className="w-3.5 h-3.5" /> Edit
@@ -814,7 +821,9 @@ export default function BukuClient({ bukuData, kategoriList, rakList, user }: Bu
                         <div className="flex gap-4">
                             <div className="w-20 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 shadow-md" style={{ height: '112px' }}>
                                 {selected.cover_url ? (
-                                    <img src={selected.cover_url} alt={selected.judul} className="w-full h-full object-cover" />
+                                    <img src={selected.cover_url} alt={selected.judul} 
+                                        onClick={() => setPreviewCoverUrl(selected.cover_url)}
+                                        className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center">
                                         <BookOpen className="w-8 h-8 text-gray-300" />
@@ -884,6 +893,20 @@ export default function BukuClient({ bukuData, kategoriList, rakList, user }: Bu
                 </div>
             </Modal>
 
+            {/* Cover Preview Modal */}
+            <Modal isOpen={!!previewCoverUrl}
+                onClose={() => setPreviewCoverUrl(null)}
+                title="Sampul Buku">
+                <div className="flex justify-center p-2 bg-gray-50 rounded-2xl overflow-hidden border border-gray-100">
+                    {previewCoverUrl && (
+                        <img
+                            src={previewCoverUrl}
+                            alt="Sampul Buku"
+                            className="max-w-full max-h-[60vh] object-contain rounded-xl"
+                        />
+                    )}
+                </div>
+            </Modal>
         </div>
     )
 }

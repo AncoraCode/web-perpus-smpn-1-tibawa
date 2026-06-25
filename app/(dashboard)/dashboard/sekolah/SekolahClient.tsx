@@ -55,6 +55,17 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
     const [sekolahFile, setSekolahFile] = useState<File | null>(null)
     const [sekolahPreview, setSekolahPreview] = useState<string | null>(initialData?.foto_sekolah_url || null)
 
+    // Image preview modal states
+    const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
+    const [previewImageTitle, setPreviewImageTitle] = useState<string>('')
+
+    const handlePreviewImage = (url: string | null, title: string) => {
+        if (url) {
+            setPreviewImageUrl(url)
+            setPreviewImageTitle(title)
+        }
+    }
+
     // UI States
     const [loading, setLoading] = useState(false)
     const [formError, setFormError] = useState('')
@@ -229,7 +240,7 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
                     <div className="flex items-center gap-4">
                         <div className="relative w-20 h-20 bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0">
                             {logoPreview ? (
-                                <img src={logoPreview} alt="Logo Sekolah" className="w-full h-full object-contain" />
+                                <img src={logoPreview} alt="Logo Sekolah" onClick={() => handlePreviewImage(logoPreview, 'Logo Sekolah')} className="w-full h-full object-contain cursor-pointer hover:opacity-90 transition-opacity" />
                             ) : (
                                 <School className="w-8 h-8 text-gray-300" />
                             )}
@@ -261,7 +272,7 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
                         <p className="text-xs font-semibold text-gray-800 mb-1.5">Banner Utama (Landing Page)</p>
                         <div className="relative w-full h-32 bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden mb-3">
                             {headerPreview ? (
-                                <img src={headerPreview} alt="Banner Utama" className="w-full h-full object-cover" />
+                                <img src={headerPreview} alt="Banner Utama" onClick={() => handlePreviewImage(headerPreview, 'Banner Utama (Landing Page)')} className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity" />
                             ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
                                     <Image className="w-8 h-8 mb-1" />
@@ -293,7 +304,7 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
                         <p className="text-xs font-semibold text-gray-800 mb-1.5">Banner Sekolah (Detail Sekolah)</p>
                         <div className="relative w-full h-32 bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden mb-3">
                             {sekolahPreview ? (
-                                <img src={sekolahPreview} alt="Banner Sekolah" className="w-full h-full object-cover" />
+                                <img src={sekolahPreview} alt="Banner Sekolah" onClick={() => handlePreviewImage(sekolahPreview, 'Banner Sekolah (Detail Sekolah)')} className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity" />
                             ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
                                     <Image className="w-8 h-8 mb-1" />
@@ -523,6 +534,23 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
                         </div>
                     )}
                     <p className="text-sm text-gray-700 text-center">{notif.message}</p>
+                </div>
+            </Modal>
+
+            {/* Image Preview Modal */}
+            <Modal
+                isOpen={!!previewImageUrl}
+                onClose={() => setPreviewImageUrl(null)}
+                title={previewImageTitle}
+            >
+                <div className="flex justify-center p-2 bg-gray-50 rounded-2xl overflow-hidden border border-gray-100">
+                    {previewImageUrl && (
+                        <img
+                            src={previewImageUrl}
+                            alt={previewImageTitle}
+                            className="max-w-full max-h-[60vh] object-contain rounded-xl"
+                        />
+                    )}
                 </div>
             </Modal>
         </div>

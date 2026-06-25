@@ -637,6 +637,21 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
                 </div>
             </Modal>
 
+            {/* Preview Foto Profil */}
+            <Modal
+                isOpen={showPhotoPreview}
+                onClose={() => setShowPhotoPreview(false)}
+                title="Pratinjau Foto Profil"
+            >
+                <div className="flex justify-center p-2 bg-gray-50 rounded-2xl overflow-hidden border border-gray-100">
+                    <img
+                        src={fotoUrl || '/assets/img/avatar.png'}
+                        alt={user.nama_lengkap}
+                        className="max-w-full max-h-[60vh] object-contain rounded-xl"
+                    />
+                </div>
+            </Modal>
+
             {/* Hapus Foto */}
             <Modal
                 isOpen={showDeletePhotoModal}
