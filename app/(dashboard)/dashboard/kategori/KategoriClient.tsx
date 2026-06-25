@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import Modal from '@/app/components/Modal'
 import { createClient } from '@/utils/supabase/client'
+import AnimatedCounter from '@/app/components/AnimatedCounter'
 
 /* ─────────────────────────────────────────
    TYPES
@@ -265,13 +266,15 @@ export default function KategoriClient({ kategoriData, user }: KategoriClientPro
             <div className="grid grid-cols-2 gap-3">
                 <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white">
                     <Layers className="w-7 h-7 opacity-80 mb-2" />
-                    <p className="text-2xl font-bold">{kategoriList.length}</p>
+                    <p className="text-2xl font-bold">
+                        <AnimatedCounter value={kategoriList.length} className="text-white font-bold text-2xl" delay={0.1} />
+                    </p>
                     <p className="text-xs opacity-80 mt-0.5">Total Kategori</p>
                 </div>
                 <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-4 text-white">
                     <BookOpen className="w-7 h-7 opacity-80 mb-2" />
                     <p className="text-2xl font-bold">
-                        {kategoriList.reduce((sum, k) => sum + (k.buku_count || 0), 0)}
+                        <AnimatedCounter value={kategoriList.reduce((sum, k) => sum + (k.buku_count || 0), 0)} className="text-white font-bold text-2xl" delay={0.1} />
                     </p>
                     <p className="text-xs opacity-80 mt-0.5">Total Buku</p>
                 </div>

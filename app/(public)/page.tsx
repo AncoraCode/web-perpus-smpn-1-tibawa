@@ -1,6 +1,7 @@
 import { BookOpen, TrendingUp, Info, Users, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
+import AnimatedCounter from '@/app/components/AnimatedCounter'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,17 +21,15 @@ async function getLandingData() {
             .from('buku')
             .select('*', { count: 'exact', head: true })
 
-        // Statistik - Total Siswa Aktif
+        // Statistik - Total Siswa Terdaftar
         const { count: totalSiswa } = await supabase
             .from('siswa')
             .select('*', { count: 'exact', head: true })
-            .eq('status', 'aktif')
 
-        // Statistik - Peminjaman Aktif
-        const { count: peminjamanAktif } = await supabase
-            .from('peminjaman')
+        // Statistik - Total Pengelola (profiles table)
+        const { count: totalPengelola } = await supabase
+            .from('profiles')
             .select('*', { count: 'exact', head: true })
-            .in('status', ['dipinjam', 'terlambat'])
 
         // Buku Terlaris (7 hari terakhir)
         const { data: bukuTerlaris, error: bukuError } = await supabase
@@ -58,7 +57,7 @@ async function getLandingData() {
             stats: {
                 totalBuku: totalBuku || 0,
                 totalSiswa: totalSiswa || 0,
-                peminjamanAktif: peminjamanAktif || 0,
+                totalPengelola: totalPengelola || 0,
             },
             bukuTerlaris: bukuTerlaris || [],
             penanggungjawab: penanggungjawab || [],
@@ -67,7 +66,7 @@ async function getLandingData() {
     } catch (error) {
         console.error('Error fetching landing data:', error)
         return {
-            stats: { totalBuku: 0, totalSiswa: 0, peminjamanAktif: 0 },
+            stats: { totalBuku: 0, totalSiswa: 0, totalPengelola: 0 },
             bukuTerlaris: [],
             penanggungjawab: [],
             detailSekolah: null
@@ -166,14 +165,24 @@ export default async function BerandaPage() {
 
                 {/* ── STATISTIK ── */}
                 <section className="px-4 pb-5">
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-primary bg-gradient-to-tl from-primary to-primary2 rounded-2xl px-4 py-4">
-                            <p className="text-white font-semibold text-2xl">{stats.totalBuku} buku</p>
-                            <p className="text-white/50 text-xs mt-0.5">Koleksi Buku</p>
+                    <div className="grid grid-cols-3 gap-2">
+                        <div className="bg-primary bg-gradient-to-tl from-primary to-primary2 rounded-2xl p-3 text-center text-white">
+                            <p className="font-semibold text-xl">
+                                <AnimatedCounter value={stats.totalPengelola} className="text-white font-semibold text-xl" delay={0.1} />
+                            </p>
+                            <p className="text-white/50 text-[10px] mt-0.5">Pengelola</p>
                         </div>
-                        <div className="bg-primary bg-gradient-to-tl from-primary to-primary2 rounded-2xl px-4 py-4">
-                            <p className="text-white font-semibold text-2xl">{stats.peminjamanAktif}x</p>
-                            <p className="text-white/50 text-xs mt-0.5">Sedang Dipinjam</p>
+                        <div className="bg-primary bg-gradient-to-tl from-primary to-primary2 rounded-2xl p-3 text-center text-white">
+                            <p className="font-semibold text-xl">
+                                <AnimatedCounter value={stats.totalSiswa} className="text-white font-semibold text-xl" delay={0.1} />
+                            </p>
+                            <p className="text-white/50 text-[10px] mt-0.5">Siswa Terdaftar</p>
+                        </div>
+                        <div className="bg-primary bg-gradient-to-tl from-primary to-primary2 rounded-2xl p-3 text-center text-white">
+                            <p className="font-semibold text-xl">
+                                <AnimatedCounter value={stats.totalBuku} className="text-white font-semibold text-xl" delay={0.1} />
+                            </p>
+                            <p className="text-white/50 text-[10px] mt-0.5">Koleksi Buku</p>
                         </div>
                     </div>
                 </section>
@@ -219,12 +228,12 @@ export default async function BerandaPage() {
                     </section>
                 )}
 
-                {/* ── PENANGGUNGJAWAB PERPUSTAKAAN ── */}
+                {/* ── PENGELOLA PERPUSTAKAAN ── */}
                 {penanggungjawab && penanggungjawab.length > 0 && (
                     <section className="px-4 pb-5">
                         <div className="flex items-center gap-2 mb-3">
                             <span className="w-1 h-4 bg-accent rounded-full" />
-                            <h2 className="font-semibold text-gray-800 text-sm">Penanggungjawab Perpustakaan</h2>
+                            <h2 className="font-semibold text-gray-800 text-sm">Pengelola Perpustakaan</h2>
                         </div>
 
                         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">

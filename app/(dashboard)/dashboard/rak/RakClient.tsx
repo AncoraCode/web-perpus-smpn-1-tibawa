@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import Modal from '@/app/components/Modal'
 import { createClient } from '@/utils/supabase/client'
+import AnimatedCounter from '@/app/components/AnimatedCounter'
 
 /* ─────────────────────────────────────────
    TYPES
@@ -294,7 +295,9 @@ export default function RakClient({ rakData, user }: RakClientProps) {
             {/* Stats */}
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white flex items-center justify-between">
                 <div>
-                    <p className="text-3xl font-bold">{rakList.length}</p>
+                    <p className="text-3xl font-bold">
+                        <AnimatedCounter value={rakList.length} className="text-white font-bold text-3xl" delay={0.1} />
+                    </p>
                     <p className="text-xs opacity-80 mt-0.5">Total Rak Terdaftar</p>
                 </div>
                 <Grid3x3 className="w-12 h-12 opacity-20" />

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import Modal from '@/app/components/Modal'
 import { createClient } from '@/utils/supabase/client'
+import AnimatedCounter from '@/app/components/AnimatedCounter'
 
 /* ─────────────────────────────────────────
    TYPES
@@ -527,12 +528,16 @@ export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
             <div className="grid grid-cols-2 gap-3">
                 <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white">
                     <Users className="w-7 h-7 opacity-80 mb-2" />
-                    <p className="text-2xl font-bold">{stats.total}</p>
+                    <p className="text-2xl font-bold">
+                        <AnimatedCounter value={stats.total} className="text-white font-bold text-2xl" delay={0.1} />
+                    </p>
                     <p className="text-xs opacity-80 mt-0.5">Total Siswa</p>
                 </div>
                 <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-4 text-white">
                     <GraduationCap className="w-7 h-7 opacity-80 mb-2" />
-                    <p className="text-2xl font-bold">{stats.aktif}</p>
+                    <p className="text-2xl font-bold">
+                        <AnimatedCounter value={stats.aktif} className="text-white font-bold text-2xl" delay={0.1} />
+                    </p>
                     <p className="text-xs opacity-80 mt-0.5">Siswa Aktif</p>
                 </div>
             </div>

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import Modal from '@/app/components/Modal'
 import { createClient } from '@/utils/supabase/client'
+import AnimatedCounter from '@/app/components/AnimatedCounter'
 
 /* ─────────────────────────────────────────
    TYPES
@@ -507,17 +508,23 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
             <div className="grid grid-cols-3 gap-2">
                 <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-3 text-white">
                     <Users className="w-6 h-6 opacity-80 mb-1" />
-                    <p className="text-xl font-bold">{stats.total}</p>
+                    <p className="text-xl font-bold">
+                        <AnimatedCounter value={stats.total} className="text-white font-bold text-xl" delay={0.1} />
+                    </p>
                     <p className="text-[10px] opacity-80">Total User</p>
                 </div>
                 <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-3 text-white">
                     <ShieldCheck className="w-6 h-6 opacity-80 mb-1" />
-                    <p className="text-xl font-bold">{stats.admin}</p>
+                    <p className="text-xl font-bold">
+                        <AnimatedCounter value={stats.admin} className="text-white font-bold text-xl" delay={0.1} />
+                    </p>
                     <p className="text-[10px] opacity-80">Admin</p>
                 </div>
                 <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-3 text-white">
                     <User className="w-6 h-6 opacity-80 mb-1" />
-                    <p className="text-xl font-bold">{stats.guru}</p>
+                    <p className="text-xl font-bold">
+                        <AnimatedCounter value={stats.guru} className="text-white font-bold text-xl" delay={0.1} />
+                    </p>
                     <p className="text-[10px] opacity-80">Guru</p>
                 </div>
             </div>

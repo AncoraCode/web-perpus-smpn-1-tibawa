@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { User, LogOut, ChevronDown } from 'lucide-react'
+import { User, LogOut, ChevronDown, Home } from 'lucide-react'
 import NProgress from 'nprogress'
 import Modal from '@/app/components/Modal'
 
@@ -111,9 +111,20 @@ export default function DashboardTopNav({ user, sekolahInfo }: DashboardTopNavPr
                                     <button
                                         onClick={() => {
                                             setIsDropdownOpen(false)
-                                            router.push('/dashboard/profile')
+                                            router.push('/')
                                         }}
                                         className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <Home className="w-4 h-4" />
+                                        Beranda
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            setIsDropdownOpen(false)
+                                            router.push('/dashboard/profile')
+                                        }}
+                                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100"
                                     >
                                         <User className="w-4 h-4" />
                                         Profile

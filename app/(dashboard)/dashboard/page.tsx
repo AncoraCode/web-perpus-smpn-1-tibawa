@@ -2,6 +2,7 @@ import { BookOpen, Users, BookMarked, AlertTriangle, TrendingUp, Clock, QrCode, 
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
 import { getUserFromCookie } from '@/utils/get-user'
+import AnimatedCounter from '@/app/components/AnimatedCounter'
 
 async function getDashboardData() {
     try {
@@ -95,7 +96,9 @@ export default async function DashboardPage() {
                     <div className="flex items-center justify-between mb-2">
                         <BookOpen className="w-8 h-8 opacity-80" />
                     </div>
-                    <p className="text-2xl font-bold">{stats.totalBuku}</p>
+                    <p className="text-2xl font-bold">
+                        <AnimatedCounter value={stats.totalBuku} className="text-white font-bold text-2xl" delay={0.1} />
+                    </p>
                     <p className="text-xs opacity-80 mt-1">Total Buku</p>
                 </div>
 
@@ -104,7 +107,9 @@ export default async function DashboardPage() {
                     <div className="flex items-center justify-between mb-2">
                         <Users className="w-8 h-8 opacity-80" />
                     </div>
-                    <p className="text-2xl font-bold">{stats.totalSiswa}</p>
+                    <p className="text-2xl font-bold">
+                        <AnimatedCounter value={stats.totalSiswa} className="text-white font-bold text-2xl" delay={0.1} />
+                    </p>
                     <p className="text-xs opacity-80 mt-1">Siswa Aktif</p>
                 </div>
 
@@ -113,7 +118,9 @@ export default async function DashboardPage() {
                     <div className="flex items-center justify-between mb-2">
                         <BookMarked className="w-8 h-8 opacity-80" />
                     </div>
-                    <p className="text-2xl font-bold">{stats.peminjamanAktif}</p>
+                    <p className="text-2xl font-bold">
+                        <AnimatedCounter value={stats.peminjamanAktif} className="text-white font-bold text-2xl" delay={0.1} />
+                    </p>
                     <p className="text-xs opacity-80 mt-1">Sedang Dipinjam</p>
                 </div>
 
@@ -122,7 +129,9 @@ export default async function DashboardPage() {
                     <div className="flex items-center justify-between mb-2">
                         <AlertTriangle className="w-8 h-8 opacity-80" />
                     </div>
-                    <p className="text-2xl font-bold">{stats.bukuTerlambat}</p>
+                    <p className="text-2xl font-bold">
+                        <AnimatedCounter value={stats.bukuTerlambat} className="text-white font-bold text-2xl" delay={0.1} />
+                    </p>
                     <p className="text-xs opacity-80 mt-1">Terlambat</p>
                 </div>
             </div>
