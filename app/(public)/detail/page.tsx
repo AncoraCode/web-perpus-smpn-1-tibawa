@@ -30,7 +30,7 @@ export default async function DetailSekolahPage() {
     const namaSekolah = detailSekolah?.nama_sekolah || 'SMP Negeri 1 Tibawa'
     const kecamatanKabupaten = detailSekolah?.kecamatan_kabupaten || 'Kecamatan Tibawa, Kabupaten Gorontalo'
     const logoUrl = detailSekolah?.logo_url || '/assets/img/logo-sekolah.png'
-    const bannerUrl = detailSekolah?.foto_header_url || '/assets/img/sekolah2.jpg'
+    const bannerUrl = detailSekolah?.foto_sekolah_url || '/assets/img/sekolah2.jpg'
     const tentangSekolah = detailSekolah?.tentang_sekolah || 'SMP Negeri 1 Tibawa adalah institusi pendidikan menengah pertama yang berdedikasi untuk menciptakan generasi cerdas, berkarakter, dan berdaya saing di wilayah Kecamatan Tibawa. Terakreditasi A, sekolah kami mengedepankan inovasi pembelajaran dan penguatan nilai-nilai budi pekerti guna mencetak siswa yang unggul dalam prestasi akademik maupun non-akademik.'
     const npsn = detailSekolah?.npsn || '40500377'
     const kepalaSekolah = detailSekolah?.kepala_sekolah || 'Rosma Isa, M.Pd'

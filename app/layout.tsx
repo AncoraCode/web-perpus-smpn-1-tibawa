@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
     const supabase = await createClient()
     const { data } = await supabase
       .from('detail_sekolah')
-      .select('nama_perpustakaan, nama_sekolah, tentang_sekolah, logo_url, foto_header_url')
+      .select('nama_perpustakaan, nama_sekolah, tentang_sekolah, logo_url, foto_header_url, foto_sekolah_url')
       .limit(1)
       .maybeSingle()
 
@@ -26,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
     const namaSekolah = data?.nama_sekolah || 'SMPN 1 Tibawa'
     const title = `${namaPerpustakaan} - ${namaSekolah}`
     const description = data?.tentang_sekolah || defaultDescription
-    const bannerUrl = data?.foto_header_url || data?.logo_url || defaultBanner
+    const bannerUrl = data?.foto_header_url || data?.foto_sekolah_url || data?.logo_url || defaultBanner
 
     return {
       title,

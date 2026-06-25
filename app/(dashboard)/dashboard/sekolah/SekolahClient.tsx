@@ -23,6 +23,7 @@ interface Sekolah {
     map_iframe_url: string | null
     logo_url: string | null
     foto_header_url: string | null
+    foto_sekolah_url: string | null
 }
 
 interface SekolahClientProps {
@@ -51,6 +52,8 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
     const [logoPreview, setLogoPreview] = useState<string | null>(initialData?.logo_url || null)
     const [headerFile, setHeaderFile] = useState<File | null>(null)
     const [headerPreview, setHeaderPreview] = useState<string | null>(initialData?.foto_header_url || null)
+    const [sekolahFile, setSekolahFile] = useState<File | null>(null)
+    const [sekolahPreview, setSekolahPreview] = useState<string | null>(initialData?.foto_sekolah_url || null)
 
     // UI States
     const [loading, setLoading] = useState(false)
@@ -63,6 +66,7 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
 
     const logoInputRef = useRef<HTMLInputElement>(null)
     const headerInputRef = useRef<HTMLInputElement>(null)
+    const sekolahInputRef = useRef<HTMLInputElement>(null)
 
     const showNotif = (success: boolean, message: string) => {
         setNotif({ show: true, success, message })
@@ -84,7 +88,15 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
         }
     }
 
-    const uploadImage = async (file: File, type: 'logo' | 'header'): Promise<string | null> => {
+    const handleSekolahChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            setSekolahFile(file)
+            setSekolahPreview(URL.createObjectURL(file))
+        }
+    }
+
+    const uploadImage = async (file: File, type: string): Promise<string | null> => {
         const ext = file.name.split('.').pop()
         const filePath = `sekolah/${type}_${Date.now()}.${ext}`
 
@@ -114,6 +126,7 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
         try {
             let currentLogoUrl = logoPreview
             let currentHeaderUrl = headerPreview
+            let currentSekolahUrl = sekolahPreview
 
             // 1. Upload Logo jika ada file baru
             if (logoFile) {
@@ -125,6 +138,12 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
             if (headerFile) {
                 const uploadedHeader = await uploadImage(headerFile, 'header')
                 if (uploadedHeader) currentHeaderUrl = uploadedHeader
+            }
+
+            // 3. Upload Sekolah Banner jika ada file baru
+            if (sekolahFile) {
+                const uploadedSekolah = await uploadImage(sekolahFile, 'sekolah_banner')
+                if (uploadedSekolah) currentSekolahUrl = uploadedSekolah
             }
 
             const payload = {
@@ -140,6 +159,7 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
                 map_iframe_url: mapIframeUrl.trim() || null,
                 logo_url: currentLogoUrl,
                 foto_header_url: currentHeaderUrl,
+                foto_sekolah_url: currentSekolahUrl,
                 updated_at: new Date().toISOString()
             }
 
@@ -172,6 +192,7 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
             // Reset file states so they don't upload again unless changed
             setLogoFile(null)
             setHeaderFile(null)
+            setSekolahFile(null)
 
         } catch (error: any) {
             console.error('Error saving detail sekolah:', error)
@@ -235,16 +256,16 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
 
                     <hr className="border-gray-100" />
 
-                    {/* Banner Upload */}
+                    {/* Banner Utama Upload */}
                     <div>
-                        <p className="text-xs font-semibold text-gray-800 mb-1.5">Foto Header / Banner</p>
+                        <p className="text-xs font-semibold text-gray-800 mb-1.5">Banner Utama (Landing Page)</p>
                         <div className="relative w-full h-32 bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden mb-3">
                             {headerPreview ? (
-                                <img src={headerPreview} alt="Banner Sekolah" className="w-full h-full object-cover" />
+                                <img src={headerPreview} alt="Banner Utama" className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
                                     <Image className="w-8 h-8 mb-1" />
-                                    <span className="text-[10px]">Belum ada banner terpilih</span>
+                                    <span className="text-[10px]">Belum ada banner utama terpilih</span>
                                 </div>
                             )}
                         </div>
@@ -261,7 +282,39 @@ export default function SekolahClient({ initialData }: SekolahClientProps) {
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 transition-colors"
                         >
                             <Upload className="w-3.5 h-3.5" />
-                            Pilih Foto Header
+                            Pilih Banner Utama
+                        </button>
+                    </div>
+
+                    <hr className="border-gray-100" />
+
+                    {/* Banner Sekolah Upload */}
+                    <div>
+                        <p className="text-xs font-semibold text-gray-800 mb-1.5">Banner Sekolah (Detail Sekolah)</p>
+                        <div className="relative w-full h-32 bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden mb-3">
+                            {sekolahPreview ? (
+                                <img src={sekolahPreview} alt="Banner Sekolah" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                                    <Image className="w-8 h-8 mb-1" />
+                                    <span className="text-[10px]">Belum ada banner sekolah terpilih</span>
+                                </div>
+                            )}
+                        </div>
+                        <input
+                            type="file"
+                            ref={sekolahInputRef}
+                            accept="image/*"
+                            onChange={handleSekolahChange}
+                            className="hidden"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => sekolahInputRef.current?.click()}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                        >
+                            <Upload className="w-3.5 h-3.5" />
+                            Pilih Banner Sekolah
                         </button>
                     </div>
                 </div>
