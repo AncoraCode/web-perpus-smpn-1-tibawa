@@ -15,7 +15,7 @@ export default async function ProfilePage() {
         nama_lengkap: user.nama_lengkap || user.full_name || 'User',
         email: user.email || null,
         telepon: user.telepon || null,
-        role: user.role || 'guru',
+        role: user.role || 'pengelola',
         foto_url: user.foto_url || null,
     }
 

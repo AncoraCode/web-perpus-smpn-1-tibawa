@@ -32,8 +32,8 @@ export default async function SiswaPage() {
         redirect('/login')
     }
 
-    // Role check: Admin & Guru bisa akses
-    if (!['admin', 'guru'].includes(user.role)) {
+    // Role check: Admin & Pengelola bisa akses
+    if (!['admin', 'pengelola'].includes(user.role)) {
         redirect('/dashboard')
     }
 

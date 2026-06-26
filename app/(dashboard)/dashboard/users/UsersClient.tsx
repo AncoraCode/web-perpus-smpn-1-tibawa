@@ -20,7 +20,7 @@ interface Profile {
     nama_lengkap: string
     email: string
     telepon: string | null
-    role: 'admin' | 'guru'
+    role: 'admin' | 'pengelola'
     foto_url: string | null
     created_at: string
     updated_at: string
@@ -31,7 +31,7 @@ type FormData = {
     nama_lengkap: string
     email: string
     telepon: string
-    role: 'admin' | 'guru'
+    role: 'admin' | 'pengelola'
     password: string
     confirm_password: string
 }
@@ -54,7 +54,7 @@ const EMPTY_FORM: FormData = {
     nama_lengkap: '',
     email: '',
     telepon: '',
-    role: 'guru',
+    role: 'pengelola',
     password: '',
     confirm_password: '',
 }
@@ -315,7 +315,7 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
     const stats = useMemo(() => ({
         total: usersList.length,
         admin: usersList.filter(u => u.role === 'admin').length,
-        guru: usersList.filter(u => u.role === 'guru').length,
+        pengelola: usersList.filter(u => u.role === 'pengelola').length,
     }), [usersList])
 
     /* ── helpers ── */
@@ -393,7 +393,7 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
                 nama_lengkap: form.nama_lengkap.trim(),
                 email: form.email.trim(),
                 telepon: form.telepon.trim() || null,
-                role: 'guru',  // selalu guru, tidak bisa pilih admin
+                role: 'pengelola',  // selalu pengelola, tidak bisa pilih admin
                 password: form.password,
             })
         })
@@ -425,7 +425,7 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
                 nama_lengkap: form.nama_lengkap.trim(),
                 email: form.email.trim(),
                 telepon: form.telepon.trim() || null,
-                // role tidak diubah — guru tetap guru
+                // role tidak diubah — pengelola tetap pengelola
             })
             .eq('id', selected.id)
             .select('id, username, nama_lengkap, email, telepon, role, foto_url, created_at, updated_at')
@@ -501,7 +501,7 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
             {/* Header */}
             <div>
                 <h1 className="text-xl font-bold text-gray-900">Manajemen User</h1>
-                <p className="text-sm text-gray-500 mt-0.5">Kelola akun guru dan admin</p>
+                <p className="text-sm text-gray-500 mt-0.5">Kelola akun pengelola dan admin</p>
             </div>
 
             {/* Stats */}
@@ -523,9 +523,9 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
                 <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-3 text-white">
                     <User className="w-6 h-6 opacity-80 mb-1" />
                     <p className="text-xl font-bold">
-                        <AnimatedCounter value={stats.guru} className="text-white font-bold text-xl" delay={0.1} />
+                        <AnimatedCounter value={stats.pengelola} className="text-white font-bold text-xl" delay={0.1} />
                     </p>
-                    <p className="text-[10px] opacity-80">Guru</p>
+                    <p className="text-[10px] opacity-80">Pengelola</p>
                 </div>
             </div>
 
@@ -595,7 +595,7 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
                                             ? 'bg-purple-100 text-purple-700'
                                             : 'bg-blue-100 text-blue-700'
                                             }`}>
-                                            {u.role === 'admin' ? '⚡ Admin' : '📚 Guru'}
+                                            {u.role === 'admin' ? '⚡ Admin' : '📚 Pengelola'}
                                         </span>
                                     </div>
                                 </div>
@@ -731,7 +731,7 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
                                     ? 'bg-purple-100 text-purple-700'
                                     : 'bg-blue-100 text-blue-700'
                                     }`}>
-                                    {selected.role === 'admin' ? '⚡ Administrator' : '📚 Guru'}
+                                    {selected.role === 'admin' ? '⚡ Administrator' : '📚 Pengelola'}
                                 </span>
                             </div>
                         </div>

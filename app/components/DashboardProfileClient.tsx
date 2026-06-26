@@ -450,7 +450,7 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
                 <p className="text-sm text-gray-500">@{user.username}</p>
                 <span className={`mt-2 text-xs px-3 py-1 rounded-full font-semibold ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
                     }`}>
-                    {user.role === 'admin' ? '⚡ Administrator' : '📚 Guru'}
+                    {user.role === 'admin' ? '⚡ Administrator' : '📚 Pengelola'}
                 </span>
 
                 {fotoUrl && !isUploadingPhoto && (
@@ -523,7 +523,7 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
                     </label>
                     <div className="relative">
                         <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input type="text" value={user.role === 'admin' ? 'Administrator' : 'Guru'} disabled
+                        <input type="text" value={user.role === 'admin' ? 'Administrator' : 'Pengelola'} disabled
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 text-gray-500 cursor-not-allowed outline-none" />
                     </div>
                 </div>

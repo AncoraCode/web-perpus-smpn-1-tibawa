@@ -39,11 +39,11 @@ async function getLandingData() {
             console.error('Error fetching buku terlaris:', bukuError)
         }
 
-        // Penanggungjawab Perpustakaan (Guru)
+        // Penanggungjawab Perpustakaan (Pengelola)
         const { data: penanggungjawab } = await supabase
             .from('profiles')
             .select('nama_lengkap, telepon, foto_url, role')
-            .eq('role', 'guru')
+            .eq('role', 'pengelola')
             .limit(3)
 
         // Detail Sekolah

@@ -98,16 +98,18 @@ interface FormFieldsProps {
     kategoriList: Kategori[]
     rakList: Rak[]
     coverPreview: string | null
+    coverFile: File | null
     isUploadingCover: boolean
     onCoverClick: () => void
     onChange: (key: keyof FormData, val: string) => void
+    onDeleteCover: () => void
 }
 
 function BukuFormFields({
     form, formError, disabled,
     kategoriList, rakList,
-    coverPreview, isUploadingCover, onCoverClick,
-    onChange,
+    coverPreview, coverFile, isUploadingCover, onCoverClick,
+    onChange, onDeleteCover,
 }: FormFieldsProps) {
     return (
         <div className="space-y-4">
@@ -144,13 +146,20 @@ function BukuFormFields({
                         <p>Klik area kiri untuk upload cover</p>
                         <p className="text-gray-400">JPG/PNG/WebP · maks. 2MB</p>
                         {coverPreview && !isUploadingCover && (
-                            <button
-                                type="button"
-                                onClick={() => onChange('kode_buku', form.kode_buku)} // trigger re-render trick
-                                className="text-red-500 hover:text-red-600 text-xs"
-                            >
-                                (cover akan diupload saat simpan)
-                            </button>
+                            <div className="flex flex-col gap-1 items-start mt-1">
+                                {coverFile && (
+                                    <span className="text-[10px] text-amber-600 font-medium">
+                                        Cover baru siap diupload saat simpan
+                                    </span>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={onDeleteCover}
+                                    className="text-red-500 hover:text-red-600 text-xs font-semibold underline flex items-center gap-1"
+                                >
+                                    Hapus Cover
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -404,6 +413,11 @@ export default function BukuClient({ bukuData, kategoriList, rakList, user }: Bu
         setCoverPreview(null)
     }
 
+    const handleDeleteCover = () => {
+        setCoverFile(null)
+        setCoverPreview(null)
+    }
+
     const openAdd = () => {
         setForm({ ...EMPTY_FORM })
         resetCover()
@@ -505,11 +519,21 @@ export default function BukuClient({ bukuData, kategoriList, rakList, user }: Bu
         setFormError('')
         setIsSubmitting(true)
 
-        // Upload cover baru jika ada file baru
-        let newCoverUrl: string | undefined = undefined
+        // Upload cover baru jika ada file baru, atau hapus cover jika dipilih hapus
+        let newCoverUrl: string | null | undefined = undefined
         if (coverFile) {
+            // Hapus cover lama dari storage jika ada
+            if (selected.cover_url) {
+                const path = selected.cover_url.split('/buku-covers/')[1]
+                if (path) await supabase.storage.from('buku-covers').remove([path])
+            }
             const url = await uploadCover(selected.id)
             if (url) newCoverUrl = url
+        } else if (!coverPreview && selected.cover_url) {
+            // Cover dihapus
+            const path = selected.cover_url.split('/buku-covers/')[1]
+            if (path) await supabase.storage.from('buku-covers').remove([path])
+            newCoverUrl = null
         }
 
         const { data, error } = await supabase
@@ -765,9 +789,10 @@ export default function BukuClient({ bukuData, kategoriList, rakList, user }: Bu
                 <BukuFormFields
                     form={form} formError={formError} disabled={isSubmitting}
                     kategoriList={kategoriList} rakList={rakList}
-                    coverPreview={coverPreview} isUploadingCover={isUploadingCover}
+                    coverPreview={coverPreview} coverFile={coverFile} isUploadingCover={isUploadingCover}
                     onCoverClick={handleCoverClick}
                     onChange={handleFormChange}
+                    onDeleteCover={handleDeleteCover}
                 />
             </Modal>
 
@@ -783,9 +808,10 @@ export default function BukuClient({ bukuData, kategoriList, rakList, user }: Bu
                 <BukuFormFields
                     form={form} formError={formError} disabled={isSubmitting}
                     kategoriList={kategoriList} rakList={rakList}
-                    coverPreview={coverPreview} isUploadingCover={isUploadingCover}
+                    coverPreview={coverPreview} coverFile={coverFile} isUploadingCover={isUploadingCover}
                     onCoverClick={handleCoverClick}
                     onChange={handleFormChange}
+                    onDeleteCover={handleDeleteCover}
                 />
             </Modal>
 
