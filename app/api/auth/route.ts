@@ -15,9 +15,9 @@ export async function POST(request: Request) {
 
         const supabase = await createClient()
 
-        // Login menggunakan function login_guru
+        // Login menggunakan function login_pengelola
         const { data, error } = await supabase
-            .rpc('login_guru', {
+            .rpc('login_pengelola', {
                 p_username: username,
                 p_password: password
             })

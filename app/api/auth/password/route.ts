@@ -24,10 +24,10 @@ export async function PUT(request: NextRequest) {
 
         const supabase = await createClient()
 
-        // 1. Verifikasi password lama — gunakan login_guru yang sudah ada di DB
+        // 1. Verifikasi password lama — gunakan login_pengelola yang sudah ada di DB
         //    (sama persis dengan flow login)
         const { data: verifyData, error: verifyError } = await supabase
-            .rpc('login_guru', {
+            .rpc('login_pengelola', {
                 p_username: user.username,
                 p_password: old_password,
             })

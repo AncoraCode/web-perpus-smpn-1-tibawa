@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
             p_email: email.trim(),
             p_telepon: telepon || null,
             p_password: password,
-            p_role: 'guru',
+            p_role: 'pengelola',
         })
 
         if (error) {
