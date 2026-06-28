@@ -12,21 +12,22 @@ export default function ForceChangePasswordModal({ isOpen }: ForceChangePassword
     const [confirmPassword, setConfirmPassword] = useState('')
     const [showNewPassword, setShowNewPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-    const [loading, setLoading] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [isLoggingOut, setIsLoggingOut] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState(false)
 
     if (!isOpen || success) return null
 
     const handleLogout = async () => {
-        setLoading(true)
+        setIsLoggingOut(true)
         setError('')
         try {
             await fetch('/api/auth', { method: 'DELETE' })
             window.location.href = '/login'
         } catch (err: any) {
             setError('Gagal keluar, silakan coba lagi')
-            setLoading(false)
+            setIsLoggingOut(false)
         }
     }
 
@@ -41,7 +42,7 @@ export default function ForceChangePasswordModal({ isOpen }: ForceChangePassword
             return
         }
 
-        setLoading(true)
+        setIsSubmitting(true)
         setError('')
 
         try {
@@ -59,10 +60,11 @@ export default function ForceChangePasswordModal({ isOpen }: ForceChangePassword
             window.location.reload()
         } catch (err: any) {
             setError(err.message || 'Terjadi kesalahan')
-        } finally {
-            setLoading(false)
+            setIsSubmitting(false)
         }
     }
+
+    const loading = isSubmitting || isLoggingOut
 
     return (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
@@ -141,7 +143,7 @@ export default function ForceChangePasswordModal({ isOpen }: ForceChangePassword
                         disabled={loading}
                         className="w-full py-3 bg-accent text-white font-bold rounded-xl hover:bg-accent/90 transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50 mt-2"
                     >
-                        {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                        {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                         <span>Simpan Password</span>
                     </button>
 
@@ -149,10 +151,14 @@ export default function ForceChangePasswordModal({ isOpen }: ForceChangePassword
                         type="button"
                         onClick={handleLogout}
                         disabled={loading}
-                        className="w-full py-3 bg-gray-50 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-100 transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                        className="w-full py-3 bg-red-50 border border-red-200 text-red-600 font-semibold rounded-xl hover:bg-red-100 hover:text-red-700 transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50"
                     >
-                        <LogOut className="w-4 h-4" />
-                        <span>Keluar / Logout</span>
+                        {isLoggingOut ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                            <LogOut className="w-4 h-4" />
+                        )}
+                        <span>Logout</span>
                     </button>
                 </form>
             </div>
