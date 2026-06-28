@@ -36,8 +36,8 @@ export default async function KategoriPage() {
 
     if (!user) redirect('/login')
 
-    // Admin only
-    if (user.role !== 'admin') redirect('/dashboard')
+    // Admin & Pengelola bisa akses
+    if (!['admin', 'pengelola'].includes(user.role)) redirect('/dashboard')
 
     const kategoriData = await getKategoriData()
 

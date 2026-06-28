@@ -17,10 +17,10 @@ const getOtherMenus = (role: string) => {
     const menus = [
         { label: 'Siswa', href: '/dashboard/siswa', icon: Users, roles: ['admin', 'pengelola'] },
         { label: 'Kartu Siswa', href: '/dashboard/kartu-siswa', icon: CreditCard, roles: ['admin', 'pengelola'] },
-        { label: 'Rak', href: '/dashboard/rak', icon: Grid3x3, roles: ['admin'] },
-        { label: 'Kategori Buku', href: '/dashboard/kategori', icon: Layers, roles: ['admin'] },
-        { label: 'Buku', href: '/dashboard/buku', icon: BookOpen, roles: ['admin'] },
-        { label: 'Detail Sekolah', href: '/dashboard/sekolah', icon: School, roles: ['admin'] },
+        { label: 'Rak', href: '/dashboard/rak', icon: Grid3x3, roles: ['admin', 'pengelola'] },
+        { label: 'Kategori Buku', href: '/dashboard/kategori', icon: Layers, roles: ['admin', 'pengelola'] },
+        { label: 'Buku', href: '/dashboard/buku', icon: BookOpen, roles: ['admin', 'pengelola'] },
+        { label: 'Detail Sekolah', href: '/dashboard/sekolah', icon: School, roles: ['admin', 'pengelola'] },
         { label: 'Users', href: '/dashboard/users', icon: Users, roles: ['admin'] },
     ]
 

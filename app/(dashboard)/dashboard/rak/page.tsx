@@ -29,8 +29,8 @@ export default async function RakPage() {
 
     if (!user) redirect('/login')
 
-    // Admin only
-    if (user.role !== 'admin') redirect('/dashboard')
+    // Admin & Pengelola bisa akses
+    if (!['admin', 'pengelola'].includes(user.role)) redirect('/dashboard')
 
     const rakData = await getRakData()
 

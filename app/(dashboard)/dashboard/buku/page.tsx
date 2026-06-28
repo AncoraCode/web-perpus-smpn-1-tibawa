@@ -42,7 +42,7 @@ async function getBukuPageData() {
 export default async function BukuPage() {
     const user = await getUserFromCookie()
     if (!user) redirect('/login')
-    if (user.role !== 'admin') redirect('/dashboard')
+    if (!['admin', 'pengelola'].includes(user.role)) redirect('/dashboard')
 
     const { buku, kategori, rak } = await getBukuPageData()
 
