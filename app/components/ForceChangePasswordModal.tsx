@@ -59,9 +59,9 @@ export default function ForceChangePasswordModal({ isOpen }: ForceChangePassword
                     <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3 text-amber-600">
                         <Lock className="w-6 h-6" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">Ubah Password Default Anda</h3>
+                    <h3 className="text-lg font-bold text-gray-900">Ubah Password Anda</h3>
                     <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                        Demi keamanan akun Anda, silakan ubah password sementara Anda terlebih dahulu untuk dapat mengakses dashboard.
+                        Demi keamanan akun Anda, silakan ubah password Anda terlebih dahulu untuk dapat mengakses dashboard.
                     </p>
                 </div>
 
