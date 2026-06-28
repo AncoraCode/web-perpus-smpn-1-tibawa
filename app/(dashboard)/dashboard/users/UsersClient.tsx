@@ -67,17 +67,11 @@ interface FormFieldsProps {
     formError: string
     disabled: boolean
     isEdit: boolean
-    showPassword: boolean
-    showConfirm: boolean
-    onTogglePassword: () => void
-    onToggleConfirm: () => void
     onChange: (key: keyof FormData, val: string) => void
 }
 
 function UserFormFields({
     form, formError, disabled, isEdit,
-    showPassword, showConfirm,
-    onTogglePassword, onToggleConfirm,
     onChange,
 }: FormFieldsProps) {
     return (
@@ -134,135 +128,6 @@ function UserFormFields({
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none"
                     placeholder="08123456789" />
             </div>
-
-
-
-            {/* Password — hanya saat tambah baru */}
-            {!isEdit && (
-                <>
-                    <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                            Password <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
-                            <input
-                                type={showPassword ? 'text' : 'password'}
-                                value={form.password} disabled={disabled}
-                                onChange={e => onChange('password', e.target.value)}
-                                className="w-full px-3 py-2.5 pr-10 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none"
-                                placeholder="Min. 6 karakter" />
-                            <button type="button" onClick={onTogglePassword}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                            Konfirmasi Password <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
-                            <input
-                                type={showConfirm ? 'text' : 'password'}
-                                value={form.confirm_password} disabled={disabled}
-                                onChange={e => onChange('confirm_password', e.target.value)}
-                                className={`w-full px-3 py-2.5 pr-10 border rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none transition-colors ${form.confirm_password && form.password !== form.confirm_password
-                                    ? 'border-red-300 bg-red-50'
-                                    : form.confirm_password && form.password === form.confirm_password
-                                        ? 'border-green-300'
-                                        : 'border-gray-200'
-                                    }`}
-                                placeholder="Ulangi password" />
-                            <button type="button" onClick={onToggleConfirm}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                                {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                        </div>
-                        {form.confirm_password && form.password !== form.confirm_password && (
-                            <p className="text-xs text-red-500 mt-1">Password tidak cocok</p>
-                        )}
-                        {form.confirm_password && form.password === form.confirm_password && (
-                            <p className="text-xs text-green-500 mt-1">✓ Password cocok</p>
-                        )}
-                    </div>
-                </>
-            )}
-        </div>
-    )
-}
-
-/* ─────────────────────────────────────────
-   RESET PASSWORD FIELDS — di luar komponen
-───────────────────────────────────────── */
-interface ResetPwFieldsProps {
-    data: ResetPwData
-    error: string
-    disabled: boolean
-    showNew: boolean
-    showConfirm: boolean
-    onToggleNew: () => void
-    onToggleConfirm: () => void
-    onChange: (key: keyof ResetPwData, val: string) => void
-}
-
-function ResetPasswordFields({
-    data, error, disabled,
-    showNew, showConfirm,
-    onToggleNew, onToggleConfirm,
-    onChange,
-}: ResetPwFieldsProps) {
-    return (
-        <div className="space-y-4">
-            {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex items-center gap-2">
-                    <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-                    <p className="text-xs text-red-600 font-medium">{error}</p>
-                </div>
-            )}
-            <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    Password Baru <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                    <input type={showNew ? 'text' : 'password'}
-                        value={data.new_password} disabled={disabled}
-                        onChange={e => onChange('new_password', e.target.value)}
-                        className="w-full px-3 py-2.5 pr-10 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none"
-                        placeholder="Min. 6 karakter" />
-                    <button type="button" onClick={onToggleNew}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                        {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                </div>
-            </div>
-            <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    Konfirmasi Password <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                    <input type={showConfirm ? 'text' : 'password'}
-                        value={data.confirm_password} disabled={disabled}
-                        onChange={e => onChange('confirm_password', e.target.value)}
-                        className={`w-full px-3 py-2.5 pr-10 border rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none transition-colors ${data.confirm_password && data.new_password !== data.confirm_password
-                            ? 'border-red-300 bg-red-50'
-                            : data.confirm_password && data.new_password === data.confirm_password
-                                ? 'border-green-300'
-                                : 'border-gray-200'
-                            }`}
-                        placeholder="Ulangi password baru" />
-                    <button type="button" onClick={onToggleConfirm}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                        {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                </div>
-                {data.confirm_password && data.new_password !== data.confirm_password && (
-                    <p className="text-xs text-red-500 mt-1">Password tidak cocok</p>
-                )}
-                {data.confirm_password && data.new_password === data.confirm_password && (
-                    <p className="text-xs text-green-500 mt-1">✓ Password cocok</p>
-                )}
-            </div>
         </div>
     )
 }
@@ -276,10 +141,9 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
 
     // Modals
     const [showAddModal, setShowAddModal] = useState(false)
-    const [showEditModal, setShowEditModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [showDetailModal, setShowDetailModal] = useState(false)
-    const [showResetPwModal, setShowResetPwModal] = useState(false)
+    const [createdCreds, setCreatedCreds] = useState<{ nama_lengkap: string; username: string; password: string } | null>(null)
     const [notif, setNotif] = useState<{ show: boolean; success: boolean; message: string }>({
         show: false, success: true, message: ''
     })
@@ -287,18 +151,9 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
     const [selected, setSelected] = useState<Profile | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
-    const [isResettingPw, setIsResettingPw] = useState(false)
     const [formError, setFormError] = useState('')
-    const [resetPwError, setResetPwError] = useState('')
 
     const [form, setForm] = useState<FormData>({ ...EMPTY_FORM })
-    const [resetPwData, setResetPwData] = useState<ResetPwData>({ new_password: '', confirm_password: '' })
-
-    // Password visibility
-    const [showPassword, setShowPassword] = useState(false)
-    const [showConfirmPw, setShowConfirmPw] = useState(false)
-    const [showNewPw, setShowNewPw] = useState(false)
-    const [showConfirmReset, setShowConfirmReset] = useState(false)
 
     const supabase = createClient()
 
@@ -322,67 +177,43 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
     const handleFormChange = (key: keyof FormData, val: string) =>
         setForm(prev => ({ ...prev, [key]: val }))
 
-    const handleResetPwChange = (key: keyof ResetPwData, val: string) => {
-        setResetPwData(prev => ({ ...prev, [key]: val }))
-        if (resetPwError) setResetPwError('')
-    }
-
     const showNotif = (success: boolean, message: string) =>
         setNotif({ show: true, success, message })
+
+    const generateRandomPassword = () => {
+        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        let pass = ''
+        for (let i = 0; i < 6; i++) {
+            pass += chars.charAt(Math.floor(Math.random() * chars.length))
+        }
+        return pass
+    }
 
     const openAdd = () => {
         setForm({ ...EMPTY_FORM })
         setFormError('')
-        setShowPassword(false)
-        setShowConfirmPw(false)
         setShowAddModal(true)
-    }
-
-    const openEdit = (u: Profile) => {
-        setSelected(u)
-        setForm({
-            username: u.username,
-            nama_lengkap: u.nama_lengkap,
-            email: u.email,
-            telepon: u.telepon ?? '',
-            role: u.role,
-            password: '',
-            confirm_password: '',
-        })
-        setFormError('')
-        setShowEditModal(true)
     }
 
     const openDelete = (u: Profile) => { setSelected(u); setShowDeleteModal(true) }
     const openDetail = (u: Profile) => { setSelected(u); setShowDetailModal(true) }
 
-    const openResetPw = (u: Profile) => {
-        setSelected(u)
-        setResetPwData({ new_password: '', confirm_password: '' })
-        setResetPwError('')
-        setShowNewPw(false)
-        setShowConfirmReset(false)
-        setShowResetPwModal(true)
-    }
-
-    const validate = (isEdit = false): string => {
+    const validate = (): string => {
         if (!form.nama_lengkap.trim()) return 'Nama lengkap wajib diisi'
         if (!form.username.trim()) return 'Username wajib diisi'
         if (!form.email.trim()) return 'Email wajib diisi'
-        if (!isEdit) {
-            if (!form.password) return 'Password wajib diisi'
-            if (form.password.length < 6) return 'Password minimal 6 karakter'
-            if (form.password !== form.confirm_password) return 'Konfirmasi password tidak cocok'
-        }
+        if (!form.email.trim().includes('@')) return 'Format email tidak valid'
         return ''
     }
 
     /* ── Add User ── */
     const handleAdd = async () => {
-        const err = validate(false)
+        const err = validate()
         if (err) { setFormError(err); return }
         setFormError('')
         setIsSubmitting(true)
+
+        const generatedPassword = generateRandomPassword()
 
         // Buat user via API route (karena perlu hash password)
         const res = await fetch('/api/auth/register', {
@@ -394,7 +225,7 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
                 email: form.email.trim(),
                 telepon: form.telepon.trim() || null,
                 role: 'pengelola',  // selalu pengelola, tidak bisa pilih admin
-                password: form.password,
+                password: generatedPassword,
             })
         })
 
@@ -408,41 +239,11 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
         setUsersList(prev => [...prev, result.user])
         setShowAddModal(false)
         setIsSubmitting(false)
-        showNotif(true, `User "${result.user.nama_lengkap}" berhasil ditambahkan`)
-    }
-
-    /* ── Edit User ── */
-    const handleEdit = async () => {
-        if (!selected) return
-        const err = validate(true)
-        if (err) { setFormError(err); return }
-        setFormError('')
-        setIsSubmitting(true)
-
-        const { data, error } = await supabase
-            .from('profiles')
-            .update({
-                nama_lengkap: form.nama_lengkap.trim(),
-                email: form.email.trim(),
-                telepon: form.telepon.trim() || null,
-                // role tidak diubah — pengelola tetap pengelola
-            })
-            .eq('id', selected.id)
-            .select('id, username, nama_lengkap, email, telepon, role, foto_url, created_at, updated_at')
-            .single()
-
-        if (error) {
-            setFormError(
-                error.code === '23505' ? 'Email sudah digunakan' : 'Gagal: ' + error.message
-            )
-            setIsSubmitting(false)
-            return
-        }
-
-        setUsersList(prev => prev.map(u => u.id === selected.id ? data : u))
-        setShowEditModal(false)
-        setIsSubmitting(false)
-        showNotif(true, `Data "${data.nama_lengkap}" berhasil diperbarui`)
+        setCreatedCreds({
+            nama_lengkap: result.user.nama_lengkap,
+            username: result.user.username,
+            password: generatedPassword
+        })
     }
 
     /* ── Delete User ── */
@@ -466,33 +267,7 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
         showNotif(true, `User "${nama}" berhasil dihapus`)
     }
 
-    /* ── Reset Password ── */
-    const handleResetPassword = async () => {
-        if (!selected) return
-        if (!resetPwData.new_password) { setResetPwError('Password baru wajib diisi'); return }
-        if (resetPwData.new_password.length < 6) { setResetPwError('Password minimal 6 karakter'); return }
-        if (resetPwData.new_password !== resetPwData.confirm_password) {
-            setResetPwError('Konfirmasi password tidak cocok'); return
-        }
 
-        setResetPwError('')
-        setIsResettingPw(true)
-
-        const { error } = await supabase.rpc('update_user_password', {
-            p_user_id: selected.id,
-            p_new_password: resetPwData.new_password,
-        })
-
-        if (error) {
-            setResetPwError('Gagal reset password: ' + error.message)
-            setIsResettingPw(false)
-            return
-        }
-
-        setShowResetPwModal(false)
-        setIsResettingPw(false)
-        showNotif(true, `Password "${selected.nama_lengkap}" berhasil direset`)
-    }
 
     /* ── render ── */
     return (
@@ -601,23 +376,19 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
                                 </div>
                             </div>
 
-                            {/* Actions — disabled semua untuk akun admin */}
-                            {u.role !== 'admin' && (
-                                <div className="flex gap-2">
-                                    <button onClick={() => openEdit(u)}
-                                        className="flex-1 py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-100 transition-colors flex items-center justify-center gap-1">
-                                        <Edit2 className="w-3.5 h-3.5" /> Edit
-                                    </button>
-                                    <button onClick={() => openResetPw(u)}
-                                        className="flex-1 py-2 bg-amber-50 text-amber-600 rounded-lg text-xs font-medium hover:bg-amber-100 transition-colors flex items-center justify-center gap-1">
-                                        <KeyRound className="w-3.5 h-3.5" /> Reset PW
-                                    </button>
+                            {/* Actions */}
+                            <div className="flex gap-2">
+                                <button onClick={() => openDetail(u)}
+                                    className={`py-2 px-3 bg-gray-50 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-100 transition-colors flex items-center justify-center gap-1.5 ${u.role === 'admin' ? 'w-full' : 'flex-1'}`}>
+                                    <Eye className="w-3.5 h-3.5" /> Detail
+                                </button>
+                                {u.role !== 'admin' && (
                                     <button onClick={() => openDelete(u)}
-                                        className="flex-1 py-2 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100 transition-colors flex items-center justify-center gap-1">
+                                        className="flex-1 py-2 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100 transition-colors flex items-center justify-center gap-1.5">
                                         <Trash2 className="w-3.5 h-3.5" /> Hapus
                                     </button>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     )
                 })}
@@ -636,26 +407,6 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
                 }}>
                 <UserFormFields
                     form={form} formError={formError} disabled={isSubmitting} isEdit={false}
-                    showPassword={showPassword} showConfirm={showConfirmPw}
-                    onTogglePassword={() => setShowPassword(p => !p)}
-                    onToggleConfirm={() => setShowConfirmPw(p => !p)}
-                    onChange={handleFormChange}
-                />
-            </Modal>
-
-            {/* Edit */}
-            <Modal isOpen={showEditModal}
-                onClose={() => { if (!isSubmitting) { setShowEditModal(false); setFormError('') } }}
-                title="Edit User"
-                confirmation={{
-                    negativeBtn: 'Batal', positiveBtn: 'Simpan Perubahan',
-                    handlePositiveBtn: handleEdit,
-                    loading: { text: 'Menyimpan...', isLoading: isSubmitting, setIsLoading: setIsSubmitting }
-                }}>
-                <UserFormFields
-                    form={form} formError={formError} disabled={isSubmitting} isEdit={true}
-                    showPassword={false} showConfirm={false}
-                    onTogglePassword={() => { }} onToggleConfirm={() => { }}
                     onChange={handleFormChange}
                 />
             </Modal>
@@ -676,34 +427,6 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
                         (@{selected?.username})
                     </span>? Tindakan ini tidak dapat dibatalkan.
                 </p>
-            </Modal>
-
-            {/* Reset Password */}
-            <Modal isOpen={showResetPwModal}
-                onClose={() => { if (!isResettingPw) { setShowResetPwModal(false); setResetPwError('') } }}
-                title={`Reset Password`}
-                confirmation={{
-                    negativeBtn: 'Batal', positiveBtn: 'Reset Password',
-                    handlePositiveBtn: handleResetPassword,
-                    loading: { text: 'Mereset...', isLoading: isResettingPw, setIsLoading: setIsResettingPw }
-                }}>
-                <div className="space-y-3">
-                    {/* Info user */}
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 flex items-center gap-2">
-                        <KeyRound className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                        <div>
-                            <p className="text-xs font-semibold text-amber-800">{selected?.nama_lengkap}</p>
-                            <p className="text-xs text-amber-600 font-mono">@{selected?.username}</p>
-                        </div>
-                    </div>
-                    <ResetPasswordFields
-                        data={resetPwData} error={resetPwError} disabled={isResettingPw}
-                        showNew={showNewPw} showConfirm={showConfirmReset}
-                        onToggleNew={() => setShowNewPw(p => !p)}
-                        onToggleConfirm={() => setShowConfirmReset(p => !p)}
-                        onChange={handleResetPwChange}
-                    />
-                </div>
             </Modal>
 
             {/* Detail */}
@@ -758,6 +481,64 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
                         ))}
                     </div>
                 )}
+            </Modal>
+
+            {/* Modal credentials info */}
+            <Modal isOpen={!!createdCreds}
+                onClose={() => setCreatedCreds(null)}
+                title="Akun Berhasil Dibuat"
+            >
+                <div className="space-y-4">
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+                        <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-2" />
+                        <p className="text-sm font-semibold text-green-800">
+                            User baru berhasil didaftarkan!
+                        </p>
+                        <p className="text-xs text-green-600 mt-1">
+                            Kredensial ini hanya akan ditampilkan satu kali. Catat atau salin sekarang.
+                        </p>
+                    </div>
+
+                    <div className="space-y-3">
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1">Nama Lengkap</label>
+                            <p className="text-sm font-semibold text-gray-800 bg-gray-50 p-2.5 rounded-lg border border-gray-100">{createdCreds?.nama_lengkap}</p>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1">Username</label>
+                            <div className="flex gap-2">
+                                <input type="text" readOnly value={createdCreds?.username || ''}
+                                    className="flex-1 text-sm font-mono bg-gray-50 p-2.5 rounded-lg border border-gray-100 outline-none" />
+                                <button onClick={() => {
+                                    navigator.clipboard.writeText(createdCreds?.username || '')
+                                    alert('Username berhasil disalin')
+                                }}
+                                    className="px-3 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg text-xs font-medium border border-gray-200">
+                                    Salin
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1">Password Sementara</label>
+                            <div className="flex gap-2">
+                                <input type="text" readOnly value={createdCreds?.password || ''}
+                                    className="flex-1 text-sm font-mono bg-gray-50 p-2.5 rounded-lg border border-gray-100 outline-none" />
+                                <button onClick={() => {
+                                    navigator.clipboard.writeText(createdCreds?.password || '')
+                                    alert('Password berhasil disalin')
+                                }}
+                                    className="px-3 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg text-xs font-medium border border-gray-200">
+                                    Salin
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onClick={() => setCreatedCreds(null)}
+                        className="w-full py-2.5 bg-accent text-white font-medium hover:bg-accent/90 rounded-lg text-sm mt-2 transition-colors">
+                        Selesai
+                    </button>
+                </div>
             </Modal>
 
             {/* Notifikasi */}
