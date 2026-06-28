@@ -11,6 +11,7 @@ interface ModalProps {
         negativeBtn: string;
         positiveBtn: string;
         handlePositiveBtn: () => void;
+        disabled?: boolean;
         loading?: {
             text: string;
             isLoading: boolean;
@@ -95,8 +96,8 @@ export default function Modal({
                                         onClose()
                                     }
                                 }}
-                                disabled={confirmation?.loading?.isLoading}
-                                className="px-4 py-2 flex gap-2 items-center justify-center text-sm bg-accent hover:bg-accent/90 text-white rounded-lg transition-colors disabled:opacity-50"
+                                disabled={confirmation?.loading?.isLoading || confirmation?.disabled}
+                                className="px-4 py-2 flex gap-2 items-center justify-center text-sm bg-accent hover:bg-accent/90 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {confirmation?.loading?.isLoading ? (
                                     <>

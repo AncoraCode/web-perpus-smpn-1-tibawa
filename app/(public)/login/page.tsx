@@ -27,6 +27,16 @@ export default function LoginPage() {
     // Percobaan Login Gagal
     const [failedAttempts, setFailedAttempts] = useState<{ username: string; count: number }>({ username: '', count: 0 })
 
+    const resetForgotFields = (presetIdentifier = '') => {
+        setForgotIdentifier(presetIdentifier)
+        setForgotCode('')
+        setNewPassword('')
+        setConfirmNewPassword('')
+        setForgotEmail('')
+        setMaskedEmail('')
+        setError('')
+    }
+
     useEffect(() => {
         const fetchSekolah = async () => {
             const supabase = createClient()
@@ -201,8 +211,7 @@ export default function LoginPage() {
                                 onClick={() => {
                                     setIsForgotPw(true)
                                     setForgotStep(1)
-                                    setForgotIdentifier(failedAttempts.username)
-                                    setError('')
+                                    resetForgotFields(failedAttempts.username)
                                 }}
                                 className="text-xs font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 py-2 px-3 rounded-lg text-center transition-colors border border-amber-300/30"
                             >
@@ -276,8 +285,7 @@ export default function LoginPage() {
                                     onClick={() => {
                                         setIsForgotPw(true)
                                         setForgotStep(1)
-                                        setForgotIdentifier('')
-                                        setError('')
+                                        resetForgotFields('')
                                     }}
                                     className="text-xs font-semibold text-accent hover:underline"
                                 >
@@ -332,7 +340,7 @@ export default function LoginPage() {
 
                                     <button
                                         type="button"
-                                        onClick={() => { setIsForgotPw(false); setError('') }}
+                                        onClick={() => { setIsForgotPw(false); resetForgotFields('') }}
                                         className="w-full py-3 bg-gray-50 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-100 transition-all text-sm flex items-center justify-center gap-1.5"
                                     >
                                         <ArrowLeft className="w-4 h-4" /> Kembali ke Login
@@ -431,7 +439,7 @@ export default function LoginPage() {
 
                                     <button
                                         type="button"
-                                        onClick={() => { setForgotStep(1); setError(''); setForgotCode(''); setNewPassword(''); setConfirmNewPassword('') }}
+                                        onClick={() => { setForgotStep(1); resetForgotFields(forgotIdentifier) }}
                                         className="w-full py-3 bg-gray-50 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-100 transition-all text-sm flex items-center justify-center gap-1.5"
                                     >
                                         <ArrowLeft className="w-4 h-4" /> Kembali / Kirim Ulang
@@ -452,9 +460,8 @@ export default function LoginPage() {
                                         onClick={() => {
                                             setIsForgotPw(false)
                                             setForgotStep(1)
-                                            setForgotIdentifier('')
                                             setFormData({ username: '', password: '' })
-                                            setError('')
+                                            resetForgotFields('')
                                         }}
                                         className="w-full py-3 bg-accent text-white font-bold rounded-xl hover:bg-accent/90 transition-all text-sm"
                                     >

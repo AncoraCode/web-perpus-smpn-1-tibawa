@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import {
     Search, Plus, Edit2, Trash2, X,
     Users, Shield, User, Mail, Phone,
@@ -136,8 +137,13 @@ function UserFormFields({
    MAIN COMPONENT
 ───────────────────────────────────────── */
 export default function UsersClient({ usersData, currentUser }: UsersClientProps) {
+    const router = useRouter()
     const [usersList, setUsersList] = useState<Profile[]>(usersData)
     const [searchQuery, setSearchQuery] = useState('')
+
+    useEffect(() => {
+        setUsersList(usersData)
+    }, [usersData])
 
     // Modals
     const [showAddModal, setShowAddModal] = useState(false)
@@ -148,10 +154,11 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
         show: false, success: true, message: ''
     })
 
-    const [selected, setSelected] = useState<Profile | null>(null)
+        const [selected, setSelected] = useState<Profile | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [formError, setFormError] = useState('')
+    const [confirmDeleteUsername, setConfirmDeleteUsername] = useState('')
 
     const [form, setForm] = useState<FormData>({ ...EMPTY_FORM })
 
@@ -195,7 +202,11 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
         setShowAddModal(true)
     }
 
-    const openDelete = (u: Profile) => { setSelected(u); setShowDeleteModal(true) }
+    const openDelete = (u: Profile) => {
+        setSelected(u)
+        setConfirmDeleteUsername('')
+        setShowDeleteModal(true)
+    }
     const openDetail = (u: Profile) => { setSelected(u); setShowDetailModal(true) }
 
     const validate = (): string => {
@@ -244,6 +255,7 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
             username: result.user.username,
             password: generatedPassword
         })
+        router.refresh()
     }
 
     /* ── Delete User ── */
@@ -265,6 +277,7 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
         setShowDeleteModal(false)
         setIsDeleting(false)
         showNotif(true, `User "${nama}" berhasil dihapus`)
+        router.refresh()
     }
 
 
@@ -418,15 +431,31 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
                 confirmation={{
                     negativeBtn: 'Batal', positiveBtn: 'Ya, Hapus',
                     handlePositiveBtn: handleDelete,
+                    disabled: confirmDeleteUsername !== selected?.username,
                     loading: { text: 'Menghapus...', isLoading: isDeleting, setIsLoading: setIsDeleting }
                 }}>
-                <p className="text-sm text-gray-600">
-                    Apakah Anda yakin ingin menghapus user{' '}
-                    <strong className="text-gray-900">{selected?.nama_lengkap}</strong>{' '}
-                    <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">
-                        (@{selected?.username})
-                    </span>? Tindakan ini tidak dapat dibatalkan.
-                </p>
+                <div className="space-y-4">
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                        Apakah Anda yakin ingin menghapus user{' '}
+                        <strong className="text-gray-900">{selected?.nama_lengkap}</strong>{' '}
+                        <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">
+                            (@{selected?.username})
+                        </span>? Tindakan ini tidak dapat dibatalkan.
+                    </p>
+                    <div className="space-y-1.5">
+                        <label className="block text-xs font-semibold text-gray-700">
+                            Ketik kembali username <span className="font-mono bg-gray-100 px-1 rounded">@{selected?.username}</span> untuk mengonfirmasi:
+                        </label>
+                        <input
+                            type="text"
+                            value={confirmDeleteUsername}
+                            onChange={e => setConfirmDeleteUsername(e.target.value)}
+                            placeholder="Masukkan username"
+                            disabled={isDeleting}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none"
+                        />
+                    </div>
+                </div>
             </Modal>
 
             {/* Detail */}
