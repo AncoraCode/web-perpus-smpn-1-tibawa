@@ -18,8 +18,6 @@ interface Siswa {
     nisn: string | null
     nama_lengkap: string
     jenis_kelamin: 'Laki-laki' | 'Perempuan' | null
-    tempat_lahir: string | null
-    tanggal_lahir: string | null
     alamat: string | null
     telepon: string | null
     email: string | null
@@ -34,8 +32,6 @@ type FormData = {
     nisn: string
     nama_lengkap: string
     jenis_kelamin: 'Laki-laki' | 'Perempuan'
-    tempat_lahir: string
-    tanggal_lahir: string
     alamat: string
     telepon: string
     email: string
@@ -61,7 +57,6 @@ const NOMOR_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8']
 const EMPTY_FORM: FormData = {
     nis: '', nisn: '', nama_lengkap: '',
     jenis_kelamin: 'Laki-laki',
-    tempat_lahir: '', tanggal_lahir: '',
     alamat: '', telepon: '', email: '',
     kelas_tingkat: '',
     kelas_nomor: '',
@@ -187,22 +182,7 @@ function SiswaFormFields({ form, formError, disabled, onChange }: FormFieldsProp
                 </div>
             </div>
 
-            {/* Tempat & Tanggal Lahir */}
-            <div className="grid grid-cols-2 gap-3">
-                <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Tempat Lahir</label>
-                    <input type="text" value={form.tempat_lahir} disabled={disabled}
-                        onChange={e => onChange('tempat_lahir', e.target.value)}
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none"
-                        placeholder="Kota" />
-                </div>
-                <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Tanggal Lahir</label>
-                    <input type="date" value={form.tanggal_lahir} disabled={disabled}
-                        onChange={e => onChange('tanggal_lahir', e.target.value)}
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none" />
-                </div>
-            </div>
+
 
             {/* Alamat */}
             <div>
@@ -418,8 +398,6 @@ export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
             nisn: s.nisn ?? '',
             nama_lengkap: s.nama_lengkap,
             jenis_kelamin: s.jenis_kelamin === 'Perempuan' ? 'Perempuan' : 'Laki-laki',
-            tempat_lahir: s.tempat_lahir ?? '',
-            tanggal_lahir: s.tanggal_lahir ?? '',
             alamat: s.alamat ?? '',
             telepon: s.telepon ?? '',
             email: s.email ?? '',
@@ -441,8 +419,6 @@ export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
         nisn: form.nisn.trim() || null,
         nama_lengkap: form.nama_lengkap.trim(),
         jenis_kelamin: form.jenis_kelamin,
-        tempat_lahir: form.tempat_lahir.trim() || null,
-        tanggal_lahir: form.tanggal_lahir || null,
         alamat: form.alamat.trim() || null,
         telepon: form.telepon.trim() || null,
         email: form.email.trim() || null,
@@ -740,13 +716,6 @@ export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
                             { label: 'Jenis Kelamin', value: selected.jenis_kelamin },
                             { label: 'Kelas', value: selected.kelas ? `Kelas ${selected.kelas}` : null },
                             { label: 'Tahun Ajaran', value: selected.tahun_ajaran },
-                            { label: 'Tempat Lahir', value: selected.tempat_lahir },
-                            {
-                                label: 'Tanggal Lahir', value: selected.tanggal_lahir
-                                    ? new Date(selected.tanggal_lahir).toLocaleDateString('id-ID', {
-                                        day: 'numeric', month: 'long', year: 'numeric'
-                                    }) : null
-                            },
                             { label: 'Status', value: STATUS_CONFIG[selected.status].label },
                         ].filter(r => r.value).map(row => (
                             <div key={row.label} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
