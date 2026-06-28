@@ -32,8 +32,8 @@ export default async function SekolahPage() {
 
     if (!user) redirect('/login')
 
-    // Admin & Pengelola bisa akses detail sekolah
-    if (!['admin', 'pengelola'].includes(user.role)) redirect('/dashboard')
+    // Hanya admin yang bisa akses detail sekolah
+    if (user.role !== 'admin') redirect('/dashboard')
 
     const sekolahData = await getSekolahData()
 
