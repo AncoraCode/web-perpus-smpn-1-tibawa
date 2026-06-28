@@ -146,6 +146,7 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
     }, [usersData])
 
     // Modals
+    const [copiedField, setCopiedField] = useState<'username' | 'password' | null>(null)
     const [showAddModal, setShowAddModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [showDetailModal, setShowDetailModal] = useState(false)
@@ -540,10 +541,14 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
                                     className="flex-1 text-sm font-mono bg-gray-50 p-2.5 rounded-lg border border-gray-100 outline-none" />
                                 <button onClick={() => {
                                     navigator.clipboard.writeText(createdCreds?.username || '')
-                                    alert('Username berhasil disalin')
+                                    setCopiedField('username')
+                                    setTimeout(() => setCopiedField(null), 2000)
                                 }}
-                                    className="px-3 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg text-xs font-medium border border-gray-200">
-                                    Salin
+                                    className={`px-3 rounded-lg text-xs font-medium border transition-colors ${copiedField === 'username'
+                                        ? 'bg-green-50 border-green-300 text-green-700'
+                                        : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'
+                                    }`}>
+                                    {copiedField === 'username' ? 'Tersalin!' : 'Salin'}
                                 </button>
                             </div>
                         </div>
@@ -554,19 +559,37 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
                                     className="flex-1 text-sm font-mono bg-gray-50 p-2.5 rounded-lg border border-gray-100 outline-none" />
                                 <button onClick={() => {
                                     navigator.clipboard.writeText(createdCreds?.password || '')
-                                    alert('Password berhasil disalin')
+                                    setCopiedField('password')
+                                    setTimeout(() => setCopiedField(null), 2000)
                                 }}
-                                    className="px-3 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg text-xs font-medium border border-gray-200">
-                                    Salin
+                                    className={`px-3 rounded-lg text-xs font-medium border transition-colors ${copiedField === 'password'
+                                        ? 'bg-green-50 border-green-300 text-green-700'
+                                        : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'
+                                    }`}>
+                                    {copiedField === 'password' ? 'Tersalin!' : 'Salin'}
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <button onClick={() => setCreatedCreds(null)}
-                        className="w-full py-2.5 bg-accent text-white font-medium hover:bg-accent/90 rounded-lg text-sm mt-2 transition-colors">
-                        Selesai
-                    </button>
+                    <div className="pt-2 space-y-2">
+                        <button onClick={() => {
+                            if (!createdCreds) return
+                            const text = `Halo, berikut adalah akun login Perpustakaan Anda:\n\n*Nama Lengkap*: ${createdCreds.nama_lengkap}\n*Username*: ${createdCreds.username}\n*Password*: ${createdCreds.password}\n\nSilakan login ke web perpustakaan dan ubah password Anda demi keamanan. Terima kasih!`;
+                            const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+                            window.open(waUrl, '_blank');
+                        }}
+                            className="w-full py-2.5 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg text-sm transition-colors flex items-center justify-center gap-2 shadow-sm">
+                            <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008 0c3.202.001 6.212 1.249 8.477 3.517 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.5-5.739-1.453L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.963C16.588 1.981 14.116.957 11.488.956c-5.442 0-9.866 4.372-9.87 9.802 0 1.814.504 3.59 1.46 5.184l-.997 3.639 3.79-.979zm11.236-4.57c-.1-.15-.36-.25-.75-.45s-2.3-1.13-2.65-1.25-.61-.18-.86.18-.97 1.25-1.19 1.5-.44.27-.83.07c-.4-.2-1.67-.62-3.18-1.97-1.17-1.05-1.96-2.35-2.19-2.75s-.02-.62.18-.82c.18-.18.4-.45.6-.68.18-.23.25-.4.38-.68s.05-.52-.02-.68-.6-1.5-.82-2.05c-.22-.53-.45-.45-.61-.46-.16-.01-.35-.01-.55-.01s-.52.08-.79.38c-.28.3-1.06 1.04-1.06 2.53s1.09 2.92 1.24 3.12c.15.2 2.14 3.27 5.19 4.59.73.31 1.29.5 1.73.64.73.23 1.4.2 1.93.12.59-.09 1.8-.74 2.05-1.45s.25-1.32.18-1.45c-.07-.13-.27-.2-.67-.4z"/>
+                            </svg>
+                            <span>Bagikan ke WhatsApp</span>
+                        </button>
+                        <button onClick={() => setCreatedCreds(null)}
+                            className="w-full py-2.5 bg-accent text-white font-medium hover:bg-accent/90 rounded-lg text-sm transition-colors">
+                            Selesai
+                        </button>
+                    </div>
                 </div>
             </Modal>
 

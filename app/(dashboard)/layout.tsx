@@ -5,6 +5,7 @@ import { getUserFromCookie } from '@/utils/get-user'
 import { createClient } from '@/utils/supabase/server'
 import DashboardTopNav from '@/app/components/DashboardTopNav'
 import DashboardBottomNav from '@/app/components/DashboardBottomNav'
+import ForceChangePasswordModal from '@/app/components/ForceChangePasswordModal'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,8 +20,20 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  // Fetch detail sekolah untuk header dashboard
   const supabase = await createClient()
+
+  // 1. Cek jika user baru dan wajib ganti password (created_at == updated_at)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('created_at, updated_at')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  const mustChangePassword = profile
+    ? Math.abs(new Date(profile.updated_at).getTime() - new Date(profile.created_at).getTime()) < 2000
+    : false
+
+  // 2. Fetch detail sekolah untuk header dashboard
   const { data: sekolah } = await supabase
     .from('detail_sekolah')
     .select('nama_sekolah, nama_perpustakaan, logo_url')
@@ -35,6 +48,7 @@ export default async function DashboardLayout({
 
   return (
     <>
+      <ForceChangePasswordModal isOpen={mustChangePassword} />
       {/* Mobile-constrained container */}
       <div className="relative w-full max-w-mobile bg-white min-h-screen flex flex-col shadow-2xl overflow-x-hidden dashboard-container mx-auto">
         {/* Top Nav */}
