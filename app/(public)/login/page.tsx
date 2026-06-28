@@ -24,6 +24,9 @@ export default function LoginPage() {
     const [showNewPassword, setShowNewPassword] = useState(false)
     const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false)
 
+    // Percobaan Login Gagal
+    const [failedAttempts, setFailedAttempts] = useState<{ username: string; count: number }>({ username: '', count: 0 })
+
     useEffect(() => {
         const fetchSekolah = async () => {
             const supabase = createClient()
@@ -57,6 +60,15 @@ export default function LoginPage() {
             NProgress.done()
             if (!response.ok) {
                 setFormData({ username: formData.username, password: '' })
+                if (response.status === 401) {
+                    setFailedAttempts(prev => {
+                        if (prev.username === formData.username) {
+                            return { username: formData.username, count: prev.count + 1 }
+                        } else {
+                            return { username: formData.username, count: 1 }
+                        }
+                    })
+                }
                 throw new Error(result.error || 'Login gagal')
             }
             window.location.href = '/dashboard'
@@ -176,6 +188,26 @@ export default function LoginPage() {
                     {error && (
                         <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl">
                             <p className="text-sm text-red-600 leading-relaxed">{error}</p>
+                        </div>
+                    )}
+
+                    {!isForgotPw && failedAttempts.count >= 3 && (
+                        <div className="mb-4 p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex flex-col gap-2">
+                            <p className="text-xs text-amber-800 leading-relaxed">
+                                Anda telah gagal login sebanyak <strong>{failedAttempts.count} kali</strong>. Apakah Anda melupakan password Anda?
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsForgotPw(true)
+                                    setForgotStep(1)
+                                    setForgotIdentifier(failedAttempts.username)
+                                    setError('')
+                                }}
+                                className="text-xs font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 py-2 px-3 rounded-lg text-center transition-colors border border-amber-300/30"
+                            >
+                                Reset / Lupa Password
+                            </button>
                         </div>
                     )}
 
