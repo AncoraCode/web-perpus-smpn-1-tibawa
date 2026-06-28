@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Lock, Eye, EyeOff, Loader2, LogOut } from 'lucide-react'
 
 interface ForceChangePasswordModalProps {
     isOpen: boolean
@@ -17,6 +17,18 @@ export default function ForceChangePasswordModal({ isOpen }: ForceChangePassword
     const [success, setSuccess] = useState(false)
 
     if (!isOpen || success) return null
+
+    const handleLogout = async () => {
+        setLoading(true)
+        setError('')
+        try {
+            await fetch('/api/auth', { method: 'DELETE' })
+            window.location.href = '/login'
+        } catch (err: any) {
+            setError('Gagal keluar, silakan coba lagi')
+            setLoading(false)
+        }
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -131,6 +143,16 @@ export default function ForceChangePasswordModal({ isOpen }: ForceChangePassword
                     >
                         {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                         <span>Simpan Password</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={handleLogout}
+                        disabled={loading}
+                        className="w-full py-3 bg-gray-50 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-100 transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                    >
+                        <LogOut className="w-4 h-4" />
+                        <span>Keluar / Logout</span>
                     </button>
                 </form>
             </div>
