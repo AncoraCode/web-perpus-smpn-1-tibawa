@@ -106,7 +106,6 @@ export default function RootLayout({
           referrerPolicy="no-referrer"
         />
         {/* PWA Meta & Links */}
-        <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#2C4EEE" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
