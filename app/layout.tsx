@@ -105,11 +105,29 @@ export default function RootLayout({
           crossOrigin="anonymous"
           referrerPolicy="no-referrer"
         />
+        {/* PWA Meta & Links */}
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#2C4EEE" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Perpus Tibawa" />
+        <link rel="apple-touch-icon" href="/assets/img/logo-sekolah.png" />
       </head>
       <body
         className="antialiased bg-gray-200 min-h-screen flex justify-center"
         style={{ fontFamily: "'Rubik', sans-serif" }}
       >
+        <script dangerouslySetInnerHTML={{__html: `
+          if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+              navigator.serviceWorker.register('/sw.js').then(function(reg) {
+                console.log('SW registered: ', reg.scope);
+              }).catch(function(err) {
+                console.log('SW failure: ', err);
+              });
+            });
+          }
+        `}} />
         <NextTopLoader
           color="#2C4EEE"
           initialPosition={0.08}
