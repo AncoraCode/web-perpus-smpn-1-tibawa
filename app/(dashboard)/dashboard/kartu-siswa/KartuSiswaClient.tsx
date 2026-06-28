@@ -169,7 +169,11 @@ export default function KartuSiswaClient({ siswaData, sekolahInfo }: KartuSiswaC
             <style jsx global>{`
                 @media print {
                     body * { visibility: hidden; }
-                    #print-area, #print-area * { visibility: visible; }
+                    #print-area, #print-area * {
+                        visibility: visible;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
                     #print-area {
                         position: absolute;
                         left: 0; top: 0;
@@ -177,6 +181,8 @@ export default function KartuSiswaClient({ siswaData, sekolahInfo }: KartuSiswaC
                     }
                     .kartu-siswa {
                         break-inside: avoid;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
                     }
                     @page {
                         size: landscape;
