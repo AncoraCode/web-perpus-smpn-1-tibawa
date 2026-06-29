@@ -25,6 +25,7 @@ interface Profile {
     foto_url: string | null
     created_at: string
     updated_at: string
+    nip: string | null
 }
 
 type FormData = {
@@ -35,6 +36,7 @@ type FormData = {
     role: 'admin' | 'pengelola'
     password: string
     confirm_password: string
+    nip: string
 }
 
 type ResetPwData = {
@@ -58,6 +60,7 @@ const EMPTY_FORM: FormData = {
     role: 'pengelola',
     password: '',
     confirm_password: '',
+    nip: '',
 }
 
 /* ─────────────────────────────────────────
@@ -108,6 +111,17 @@ function UserFormFields({
                 {!isEdit && (
                     <p className="text-xs text-gray-400 mt-1">Huruf kecil, tanpa spasi (spasi otomatis jadi _)</p>
                 )}
+            </div>
+
+            {/* NIP */}
+            <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    NIP <span className="text-gray-400 font-normal text-[10px] ml-1">(tidak wajib diisi)</span>
+                </label>
+                <input type="text" value={form.nip} disabled={disabled}
+                    onChange={e => onChange('nip', e.target.value.replace(/\D/g, ''))}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none"
+                    placeholder="Masukkan NIP (opsional)" />
             </div>
 
             {/* Email */}
@@ -171,7 +185,8 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
         return usersList.filter(u =>
             u.nama_lengkap.toLowerCase().includes(q) ||
             u.username.toLowerCase().includes(q) ||
-            u.email.toLowerCase().includes(q)
+            u.email.toLowerCase().includes(q) ||
+            (u.nip && u.nip.toLowerCase().includes(q))
         )
     }, [usersList, searchQuery])
 
@@ -238,6 +253,7 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
                 telepon: form.telepon.trim() || null,
                 role: 'pengelola',  // selalu pengelola, tidak bisa pilih admin
                 password: generatedPassword,
+                nip: form.nip.trim() || null,
             })
         })
 
@@ -491,6 +507,7 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
 
                         {/* Info rows */}
                         {[
+                            { label: 'NIP', value: selected.nip },
                             { label: 'Email', value: selected.email },
                             { label: 'Telepon', value: selected.telepon },
                             {

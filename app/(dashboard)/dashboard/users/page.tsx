@@ -9,7 +9,7 @@ async function getUsersData() {
 
         const { data, error } = await supabase
             .from('profiles')
-            .select('id, username, nama_lengkap, email, telepon, role, foto_url, created_at, updated_at')
+            .select('id, username, nama_lengkap, email, telepon, role, foto_url, created_at, updated_at, nip')
             .order('created_at', { ascending: true })
 
         if (error) {

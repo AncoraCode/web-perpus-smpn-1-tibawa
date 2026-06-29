@@ -50,7 +50,9 @@ export default async function DashboardLayout({
     <>
       <ForceChangePasswordModal isOpen={mustChangePassword} />
       {/* Mobile-constrained container */}
-      <div className="relative w-full max-w-mobile bg-white min-h-screen flex flex-col shadow-2xl overflow-x-hidden dashboard-container mx-auto">
+      <div className={`relative w-full max-w-mobile bg-white min-h-screen flex flex-col shadow-2xl overflow-x-hidden dashboard-container mx-auto transition-all duration-300 ${
+        mustChangePassword ? 'pointer-events-none select-none filter blur-[3px] opacity-90' : ''
+      }`}>
         {/* Top Nav */}
         <DashboardTopNav user={user} sekolahInfo={sekolahInfo} />
 

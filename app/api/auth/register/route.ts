@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { username, nama_lengkap, email, telepon, password } = await request.json()
+        const { username, nama_lengkap, email, telepon, password, nip } = await request.json()
 
         // Validasi
         if (!username?.trim()) return NextResponse.json({ error: 'Username wajib diisi' }, { status: 400 })
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
             .from('profiles')
             .select('id')
             .eq('username', username.trim())
-            .single()
+            .maybeSingle()
 
         if (existingUsername) {
             return NextResponse.json({ error: 'Username sudah digunakan' }, { status: 400 })
@@ -37,10 +37,23 @@ export async function POST(request: NextRequest) {
             .from('profiles')
             .select('id')
             .eq('email', email.trim())
-            .single()
+            .maybeSingle()
 
         if (existingEmail) {
             return NextResponse.json({ error: 'Email sudah digunakan' }, { status: 400 })
+        }
+
+        // Cek NIP sudah ada (jika diisi)
+        if (nip && nip.trim() !== '') {
+            const { data: existingNip } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('nip', nip.trim())
+                .maybeSingle()
+
+            if (existingNip) {
+                return NextResponse.json({ error: 'NIP sudah digunakan' }, { status: 400 })
+            }
         }
 
         // Insert user baru dengan password ter-hash via pgcrypto
@@ -52,11 +65,12 @@ export async function POST(request: NextRequest) {
             p_telepon: telepon || null,
             p_password: password,
             p_role: 'pengelola',
+            p_nip: nip?.trim() || null,
         })
 
         if (error) {
             return NextResponse.json(
-                { error: error.message.includes('unique') ? 'Username atau email sudah digunakan' : error.message },
+                { error: error.message.includes('unique') ? 'Username, email, atau NIP sudah digunakan' : error.message },
                 { status: 500 }
             )
         }
@@ -64,7 +78,7 @@ export async function POST(request: NextRequest) {
         // Fetch data user yang baru dibuat
         const { data: newUser, error: fetchError } = await supabase
             .from('profiles')
-            .select('id, username, nama_lengkap, email, telepon, role, foto_url, created_at, updated_at')
+            .select('id, username, nama_lengkap, email, telepon, role, foto_url, created_at, updated_at, nip')
             .eq('username', username.trim())
             .single()
 
