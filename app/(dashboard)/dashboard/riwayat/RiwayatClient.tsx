@@ -117,7 +117,6 @@ export default function RiwayatClient({ riwayatData, user }: RiwayatClientProps)
                     <td style="border: 1px solid #000; text-align: center;">${formatDate(item.tanggal_pinjam)}</td>
                     <td style="border: 1px solid #000; text-align: center;">${formatDate(item.tanggal_kembali)}</td>
                     <td style="border: 1px solid #000; text-align: center; font-weight: bold; color: ${item.status === 'terlambat' ? '#b91c1c' : '#15803d'};">${item.status}</td>
-                    <td style="border: 1px solid #000; text-align: right; mso-number-format:'#,##0';">${item.denda}</td>
                     <td style="border: 1px solid #000;">${item.petugas?.nama_lengkap || '-'}</td>
                 </tr>
             `
@@ -158,7 +157,6 @@ export default function RiwayatClient({ riwayatData, user }: RiwayatClientProps)
                             <th style="border: 1px solid #000; padding: 5px;">Tanggal Pinjam</th>
                             <th style="border: 1px solid #000; padding: 5px;">Tanggal Kembali</th>
                             <th style="border: 1px solid #000; padding: 5px;">Status</th>
-                            <th style="border: 1px solid #000; padding: 5px;">Denda (Rp)</th>
                             <th style="border: 1px solid #000; padding: 5px;">Petugas</th>
                         </tr>
                     </thead>
@@ -226,7 +224,6 @@ export default function RiwayatClient({ riwayatData, user }: RiwayatClientProps)
                             ${item.status}
                         </span>
                     </td>
-                    <td>Rp ${item.denda.toLocaleString('id-ID')}</td>
                     <td>${item.petugas?.nama_lengkap || '-'}</td>
                 </tr>
             `
@@ -263,12 +260,11 @@ export default function RiwayatClient({ riwayatData, user }: RiwayatClientProps)
                     <thead>
                         <tr>
                             <th style="width: 5%">No</th>
-                            <th style="width: 20%">Siswa</th>
-                            <th style="width: 20%">Buku</th>
+                            <th style="width: 25%">Siswa</th>
+                            <th style="width: 25%">Buku</th>
                             <th style="width: 12%">Tgl Pinjam</th>
                             <th style="width: 12%">Tgl Kembali</th>
                             <th style="width: 11%">Status</th>
-                            <th style="width: 10%">Denda</th>
                             <th style="width: 10%">Petugas</th>
                         </tr>
                     </thead>
