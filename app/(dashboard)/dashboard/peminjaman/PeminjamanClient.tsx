@@ -6,7 +6,7 @@ import {
     Search, Plus, BookMarked, CheckCircle2, XCircle,
     Clock, AlertTriangle, BookOpen, User, X,
     CalendarDays, RotateCcw, ChevronDown, Filter, FileText,
-    Trash2,
+    Trash2, FileSpreadsheet,
 } from 'lucide-react'
 import Modal from '@/app/components/Modal'
 import { createClient } from '@/utils/supabase/client'
@@ -350,6 +350,215 @@ export default function PeminjamanClient({
     // Tanggal kembali untuk pengembalian
     const [tanggalKembali, setTanggalKembali] = useState(today())
 
+    // Range tanggal untuk download laporan
+    const [startDate, setStartDate] = useState('')
+    const [endDate, setEndDate] = useState('')
+
+    const filterByDateRange = (items: Peminjaman[]) => {
+        return items.filter(item => {
+            const itemDate = item.tanggal_pinjam.split('T')[0]
+            if (startDate && itemDate < startDate) return false
+            if (endDate && itemDate > endDate) return false
+            return true
+        })
+    }
+
+    const handleExportExcel = () => {
+        if (!startDate || !endDate) {
+            setNotif({ show: true, success: false, message: 'Tanggal awal dan akhir harus diisi!' })
+            return
+        }
+        if (startDate > endDate) {
+            setNotif({ show: true, success: false, message: 'Tanggal awal tidak boleh melebihi tanggal akhir!' })
+            return
+        }
+
+        const filteredData = filterByDateRange(list)
+        if (filteredData.length === 0) {
+            setNotif({ show: true, success: false, message: 'Tidak ada data peminjaman dalam range tanggal tersebut!' })
+            return
+        }
+
+        let rowsHtml = ''
+        filteredData.forEach((item, index) => {
+            rowsHtml += `
+                <tr>
+                    <td style="border: 1px solid #000; text-align: center;">${index + 1}</td>
+                    <td style="border: 1px solid #000;">${item.siswa?.nama_lengkap || '-'}</td>
+                    <td style="border: 1px solid #000; mso-number-format:'@';">${item.siswa?.nis || '-'}</td>
+                    <td style="border: 1px solid #000;">${item.siswa?.kelas || '-'}</td>
+                    <td style="border: 1px solid #000;">${item.buku?.judul || '-'}</td>
+                    <td style="border: 1px solid #000; mso-number-format:'@';">${item.buku?.kode_buku || '-'}</td>
+                    <td style="border: 1px solid #000; text-align: center;">${formatDate(item.tanggal_pinjam)}</td>
+                    <td style="border: 1px solid #000; text-align: center;">${formatDate(item.tanggal_jatuh_tempo)}</td>
+                    <td style="border: 1px solid #000; text-align: center; font-weight: bold; color: ${item.status === 'terlambat' ? '#b91c1c' : '#1d4ed8'};">${item.status}</td>
+                    <td style="border: 1px solid #000;">${item.petugas?.nama_lengkap || '-'}</td>
+                </tr>
+            `
+        })
+
+        const tableHtml = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head>
+                <!--[if gte mso 9]>
+                <xml>
+                    <x:ExcelWorkbook>
+                        <x:ExcelWorksheets>
+                            <x:ExcelWorksheet>
+                                <x:Name>Laporan Peminjaman</x:Name>
+                                <x:WorksheetOptions>
+                                    <x:DisplayGridlines/>
+                                </x:WorksheetOptions>
+                            </x:ExcelWorksheet>
+                        </x:ExcelWorksheets>
+                    </x:ExcelWorkbook>
+                </xml>
+                <![endif]-->
+                <meta charset="utf-8" />
+            </head>
+            <body>
+                <h2 style="text-align: center;">Laporan Peminjaman Buku</h2>
+                <h3 style="text-align: center;">SMP Negeri 1 Tibawa</h3>
+                <p style="text-align: center;">Periode: ${formatDate(startDate)} s.d. ${formatDate(endDate)}</p>
+                <table style="border-collapse: collapse;">
+                    <thead>
+                        <tr style="background-color: #2C4EEE; color: #ffffff; font-weight: bold;">
+                            <th style="border: 1px solid #000; padding: 5px;">No</th>
+                            <th style="border: 1px solid #000; padding: 5px;">Nama Siswa</th>
+                            <th style="border: 1px solid #000; padding: 5px;">NIS</th>
+                            <th style="border: 1px solid #000; padding: 5px;">Kelas</th>
+                            <th style="border: 1px solid #000; padding: 5px;">Judul Buku</th>
+                            <th style="border: 1px solid #000; padding: 5px;">Kode Buku</th>
+                            <th style="border: 1px solid #000; padding: 5px;">Tanggal Pinjam</th>
+                            <th style="border: 1px solid #000; padding: 5px;">Jatuh Tempo</th>
+                            <th style="border: 1px solid #000; padding: 5px;">Status</th>
+                            <th style="border: 1px solid #000; padding: 5px;">Petugas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+            </body>
+            </html>
+        `
+
+        const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', `Laporan_Peminjaman_${startDate}_to_${endDate}.xls`)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+    }
+
+    const handleExportPdf = () => {
+        if (!startDate || !endDate) {
+            setNotif({ show: true, success: false, message: 'Tanggal awal dan akhir harus diisi!' })
+            return
+        }
+        if (startDate > endDate) {
+            setNotif({ show: true, success: false, message: 'Tanggal awal tidak boleh melebihi tanggal akhir!' })
+            return
+        }
+
+        const filteredData = filterByDateRange(list)
+        if (filteredData.length === 0) {
+            setNotif({ show: true, success: false, message: 'Tidak ada data peminjaman dalam range tanggal tersebut!' })
+            return
+        }
+
+        const printWindow = window.open('', '_blank')
+        if (!printWindow) {
+            setNotif({ show: true, success: false, message: 'Gagal membuka jendela cetak. Pastikan pop-up dibolehkan!' })
+            return
+        }
+
+        const title = `Laporan Peminjaman (${formatDate(startDate)} - ${formatDate(endDate)})`
+
+        let rowsHtml = ''
+        filteredData.forEach((item, index) => {
+            rowsHtml += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>
+                        <div style="font-weight: bold;">${item.siswa?.nama_lengkap || '-'}</div>
+                        <div style="font-size: 10px; color: #555;">NIS: ${item.siswa?.nis || '-'} | Kelas: ${item.siswa?.kelas || '-'}</div>
+                    </td>
+                    <td>
+                        <div style="font-weight: bold;">${item.buku?.judul || '-'}</div>
+                        <div style="font-size: 10px; color: #555;">Kode: ${item.buku?.kode_buku || '-'}</div>
+                    </td>
+                    <td>${formatDate(item.tanggal_pinjam)}</td>
+                    <td>${formatDate(item.tanggal_jatuh_tempo)}</td>
+                    <td>
+                        <span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; 
+                            background-color: ${item.status === 'terlambat' ? '#fee2e2' : '#dbeafe'}; 
+                            color: ${item.status === 'terlambat' ? '#b91c1c' : '#1d4ed8'};">
+                            ${item.status}
+                        </span>
+                    </td>
+                    <td>${item.petugas?.nama_lengkap || '-'}</td>
+                </tr>
+            `
+        })
+
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>${title}</title>
+                <style>
+                    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; padding: 20px; }
+                    .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                    .header h1 { margin: 0; font-size: 20px; text-transform: uppercase; }
+                    .header h2 { margin: 5px 0 0; font-size: 14px; font-weight: normal; color: #666; }
+                    .info { margin-bottom: 20px; font-size: 12px; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    th { background-color: #f5f5f5; font-weight: bold; }
+                    tr:nth-child(even) { background-color: #fafafa; }
+                    @page { size: A4 landscape; margin: 15mm; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>Laporan Peminjaman Buku</h1>
+                    <h2>SMP Negeri 1 Tibawa</h2>
+                    <div style="font-size: 11px; margin-top: 5px; color: #555;">Periode: ${formatDate(startDate)} s.d. ${formatDate(endDate)}</div>
+                </div>
+                <div class="info">
+                    <strong>Tanggal Cetak:</strong> \${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}<br/>
+                    <strong>Total Data:</strong> \${filteredData.length} transaksi
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 5%">No</th>
+                            <th style="width: 25%">Siswa</th>
+                            <th style="width: 25%">Buku</th>
+                            <th style="width: 12%">Tgl Pinjam</th>
+                            <th style="width: 12%">Jatuh Tempo</th>
+                            <th style="width: 11%">Status</th>
+                            <th style="width: 10%">Petugas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        \${rowsHtml}
+                    </tbody>
+                </table>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        setTimeout(function() { window.close(); }, 500);
+                    };
+                </script>
+            </body>
+            </html>
+        `)
+        printWindow.document.close()
+    }
+
     const [form, setForm] = useState<FormData>({
         siswa_id: '', buku_id: '',
         jumlah: '1',
@@ -646,6 +855,50 @@ export default function PeminjamanClient({
                         <AnimatedCounter value={stats.terlambat} className="text-white font-bold text-xl" delay={0.1} />
                     </p>
                     <p className="text-[10px] opacity-80">Terlambat</p>
+                </div>
+            </div>
+
+            {/* Download Laporan */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 space-y-3">
+                <h3 className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+                    <FileText className="w-4 h-4 text-accent" />
+                    Download Laporan Peminjaman
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                    <div>
+                        <label className="block text-[10px] font-semibold text-gray-500 mb-1">TANGGAL AWAL</label>
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={e => setStartDate(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-semibold text-gray-500 mb-1">TANGGAL AKHIR</label>
+                        <input
+                            type="date"
+                            value={endDate}
+                            onChange={e => setEndDate(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
+                        />
+                    </div>
+                </div>
+                <div className="flex gap-2 pt-1">
+                    <button
+                        onClick={handleExportExcel}
+                        className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+                    >
+                        <FileSpreadsheet className="w-4 h-4" />
+                        Excel
+                    </button>
+                    <button
+                        onClick={handleExportPdf}
+                        className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+                    >
+                        <FileText className="w-4 h-4" />
+                        PDF
+                    </button>
                 </div>
             </div>
 
