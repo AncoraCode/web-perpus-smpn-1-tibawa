@@ -51,7 +51,7 @@ export function ListSkeleton({ title, subtitle }: { title?: string; subtitle?: s
     return (
         <div className="px-4 py-6 space-y-5">
             {/* Header */}
-            <div className="space-y-2">
+            <div className="space-y-0.5">
                 {title ? (
                     <h1 className="text-xl font-bold text-gray-900">{title}</h1>
                 ) : (
