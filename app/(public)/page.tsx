@@ -307,7 +307,7 @@ export default async function BerandaPage() {
                                             <img
                                                 src={anggota.foto}
                                                 alt={anggota.nama}
-                                                className="w-full h-full object-cover object-top"
+                                                className="w-full h-full object-cover object-top px-6"
                                             />
                                         ) : (
                                             <div className="w-full h-full bg-white/10 flex items-center justify-center">
