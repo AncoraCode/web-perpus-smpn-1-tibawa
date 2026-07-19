@@ -67,7 +67,7 @@ function RakFormFields({ form, formError, disabled, onChange }: FormFieldsProps)
             {/* Kode Rak */}
             <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    Kode Rak <span className="text-red-500">*</span>
+                    Kode Rak / Lemari <span className="text-red-500">*</span>
                 </label>
                 <input
                     type="text"
@@ -75,15 +75,15 @@ function RakFormFields({ form, formError, disabled, onChange }: FormFieldsProps)
                     disabled={disabled}
                     onChange={e => onChange('kode_rak', e.target.value)}
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none"
-                    placeholder="Contoh: RAK-A1"
+                    placeholder="Contoh: RAK-A1 atau LMR-B1"
                 />
-                <p className="text-xs text-gray-400 mt-1">Kode unik untuk identifikasi rak</p>
+                <p className="text-xs text-gray-400 mt-1">Kode unik untuk identifikasi rak atau lemari</p>
             </div>
 
             {/* Nama Rak */}
             <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    Nama Rak <span className="text-red-500">*</span>
+                    Nama Rak / Lemari <span className="text-red-500">*</span>
                 </label>
                 <input
                     type="text"
@@ -91,7 +91,7 @@ function RakFormFields({ form, formError, disabled, onChange }: FormFieldsProps)
                     disabled={disabled}
                     onChange={e => onChange('nama_rak', e.target.value)}
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none"
-                    placeholder="Contoh: Rak Fiksi Remaja"
+                    placeholder="Contoh: Rak Fiksi Remaja atau Lemari Referensi"
                 />
             </div>
 
@@ -117,7 +117,7 @@ function RakFormFields({ form, formError, disabled, onChange }: FormFieldsProps)
                     rows={3}
                     onChange={e => onChange('deskripsi', e.target.value)}
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent resize-none disabled:bg-gray-50 outline-none"
-                    placeholder="Keterangan tambahan tentang rak ini..."
+                    placeholder="Keterangan tambahan tentang rak atau lemari ini..."
                 />
             </div>
         </div>
@@ -213,7 +213,7 @@ export default function RakClient({ rakData, user }: RakClientProps) {
         if (error) {
             setFormError(
                 error.code === '23505'
-                    ? 'Kode Rak sudah digunakan, gunakan kode lain'
+                    ? 'Kode Rak / Lemari sudah digunakan, gunakan kode lain'
                     : 'Gagal: ' + error.message
             )
             setIsSubmitting(false)
@@ -225,7 +225,7 @@ export default function RakClient({ rakData, user }: RakClientProps) {
         ))
         setShowAddModal(false)
         setIsSubmitting(false)
-        showNotif(true, `Rak "${data.nama_rak}" berhasil ditambahkan`)
+        showNotif(true, `Rak / Lemari "${data.nama_rak}" berhasil ditambahkan`)
     }
 
     const handleEdit = async () => {
@@ -241,7 +241,7 @@ export default function RakClient({ rakData, user }: RakClientProps) {
         if (error) {
             setFormError(
                 error.code === '23505'
-                    ? 'Kode Rak sudah digunakan, gunakan kode lain'
+                    ? 'Kode Rak / Lemari sudah digunakan, gunakan kode lain'
                     : 'Gagal: ' + error.message
             )
             setIsSubmitting(false)
@@ -254,7 +254,7 @@ export default function RakClient({ rakData, user }: RakClientProps) {
         )
         setShowEditModal(false)
         setIsSubmitting(false)
-        showNotif(true, `Rak "${data.nama_rak}" berhasil diperbarui`)
+        showNotif(true, `Rak / Lemari "${data.nama_rak}" berhasil diperbarui`)
     }
 
     const handleDelete = async () => {
@@ -268,8 +268,8 @@ export default function RakClient({ rakData, user }: RakClientProps) {
             // Cek apakah rak masih dipakai oleh buku
             showNotif(false,
                 error.code === '23503'
-                    ? 'Rak tidak dapat dihapus karena masih digunakan oleh data buku'
-                    : 'Gagal menghapus rak'
+                    ? 'Rak / Lemari tidak dapat dihapus karena masih digunakan oleh data buku'
+                    : 'Gagal menghapus rak / lemari'
             )
             setShowDeleteModal(false)
             return
@@ -279,7 +279,7 @@ export default function RakClient({ rakData, user }: RakClientProps) {
         setRakList(prev => prev.filter(r => r.id !== selected.id))
         setShowDeleteModal(false)
         setIsDeleting(false)
-        showNotif(true, `Rak "${nama}" berhasil dihapus`)
+        showNotif(true, `Rak / Lemari "${nama}" berhasil dihapus`)
     }
 
     /* ── render ── */
@@ -288,8 +288,8 @@ export default function RakClient({ rakData, user }: RakClientProps) {
 
             {/* Header */}
             <div>
-                <h1 className="text-xl font-bold text-gray-900">Kelola Rak</h1>
-                <p className="text-sm text-gray-500 mt-0.5">Manajemen rak penyimpanan buku</p>
+                <h1 className="text-xl font-bold text-gray-900">Kelola Rak & Lemari Buku</h1>
+                <p className="text-sm text-gray-500 mt-0.5">Manajemen rak & lemari penyimpanan buku</p>
             </div>
 
             {/* Stats */}
@@ -298,7 +298,7 @@ export default function RakClient({ rakData, user }: RakClientProps) {
                     <p className="text-3xl font-bold">
                         <AnimatedCounter value={rakList.length} className="text-white font-bold text-3xl" delay={0.1} />
                     </p>
-                    <p className="text-xs opacity-80 mt-0.5">Total Rak Terdaftar</p>
+                    <p className="text-xs opacity-80 mt-0.5">Total Rak & Lemari Terdaftar</p>
                 </div>
                 <Grid3x3 className="w-12 h-12 opacity-20" />
             </div>
@@ -327,20 +327,20 @@ export default function RakClient({ rakData, user }: RakClientProps) {
                 className="w-full py-3 bg-accent text-white rounded-xl font-medium hover:bg-accent/90 transition-colors flex items-center justify-center gap-2 text-sm"
             >
                 <Plus className="w-4 h-4" />
-                Tambah Rak Baru
+                Tambah Rak / Lemari Baru
             </button>
 
             {/* List */}
             <div className="space-y-3">
                 <p className="text-sm font-bold text-gray-900">
-                    Daftar Rak ({filtered.length})
+                    Daftar Rak & Lemari ({filtered.length})
                 </p>
 
                 {filtered.length === 0 ? (
                     <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
                         <Grid3x3 className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                         <p className="text-gray-500 text-sm">
-                            {searchQuery ? 'Tidak ada rak ditemukan' : 'Belum ada rak. Tambahkan sekarang!'}
+                            {searchQuery ? 'Tidak ada rak atau lemari ditemukan' : 'Belum ada rak atau lemari. Tambahkan sekarang!'}
                         </p>
                     </div>
                 ) : filtered.map(r => (
@@ -403,7 +403,7 @@ export default function RakClient({ rakData, user }: RakClientProps) {
             <Modal
                 isOpen={showAddModal}
                 onClose={() => { if (!isSubmitting) { setShowAddModal(false); setFormError('') } }}
-                title="Tambah Rak Baru"
+                title="Tambah Rak & Lemari Baru"
                 confirmation={{
                     negativeBtn: 'Batal',
                     positiveBtn: 'Simpan',
@@ -423,7 +423,7 @@ export default function RakClient({ rakData, user }: RakClientProps) {
             <Modal
                 isOpen={showEditModal}
                 onClose={() => { if (!isSubmitting) { setShowEditModal(false); setFormError('') } }}
-                title="Edit Rak"
+                title="Edit Rak & Lemari"
                 confirmation={{
                     negativeBtn: 'Batal',
                     positiveBtn: 'Simpan Perubahan',
@@ -452,7 +452,7 @@ export default function RakClient({ rakData, user }: RakClientProps) {
                 }}
             >
                 <p className="text-sm text-gray-600">
-                    Apakah Anda yakin ingin menghapus rak{' '}
+                    Apakah Anda yakin ingin menghapus rak / lemari{' '}
                     <strong className="text-gray-900">{selected?.nama_rak}</strong>{' '}
                     <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">
                         ({selected?.kode_rak})
@@ -465,7 +465,7 @@ export default function RakClient({ rakData, user }: RakClientProps) {
             <Modal
                 isOpen={showDetailModal}
                 onClose={() => setShowDetailModal(false)}
-                title="Detail Rak"
+                title="Detail Rak & Lemari"
             >
                 {selected && (
                     <div className="space-y-4">
@@ -484,8 +484,8 @@ export default function RakClient({ rakData, user }: RakClientProps) {
 
                         {/* Info rows */}
                         {[
-                            { label: 'Kode Rak', value: selected.kode_rak, mono: true },
-                            { label: 'Nama Rak', value: selected.nama_rak },
+                            { label: 'Kode Rak / Lemari', value: selected.kode_rak, mono: true },
+                            { label: 'Nama Rak / Lemari', value: selected.nama_rak },
                             { label: 'Lokasi', value: selected.lokasi },
                             {
                                 label: 'Dibuat', value: new Date(selected.created_at).toLocaleDateString('id-ID', {

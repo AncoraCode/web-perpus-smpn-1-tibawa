@@ -238,11 +238,11 @@ function BukuFormFields({
 
             {/* Rak */}
             <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Rak</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Rak & Lemari Buku</label>
                 <select value={form.rak_id} disabled={disabled}
                     onChange={e => onChange('rak_id', e.target.value)}
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none">
-                    <option value="">-- Pilih Rak --</option>
+                    <option value="">-- Pilih Rak & Lemari Buku --</option>
                     {rakList.map(r => (
                         <option key={r.id} value={r.id}>{r.kode_rak} — {r.nama_rak}</option>
                     ))}
@@ -657,7 +657,7 @@ export default function BukuClient({ bukuData, kategoriList, rakList, user }: Bu
                     </select>
                     <select value={filterRak} onChange={e => setFilterRak(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-accent">
-                        <option value="">Semua Rak</option>
+                        <option value="">Semua Rak & Lemari</option>
                         {rakList.map(r => <option key={r.id} value={r.id}>{r.kode_rak} — {r.nama_rak}</option>)}
                     </select>
                 </div>
@@ -888,7 +888,7 @@ export default function BukuClient({ bukuData, kategoriList, rakList, user }: Bu
                             { label: 'Tahun Terbit', value: selected.tahun_terbit?.toString() },
                             { label: 'ISBN', value: selected.isbn },
                             { label: 'Kategori', value: selected.kategori?.nama },
-                            { label: 'Rak', value: selected.rak ? `${selected.rak.kode_rak} — ${selected.rak.nama_rak}` : null },
+                            { label: 'Rak / Lemari', value: selected.rak ? `${selected.rak.kode_rak} — ${selected.rak.nama_rak}` : null },
                         ].filter(r => r.value).map(row => (
                             <div key={row.label} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
                                 <span className="text-xs text-gray-500">{row.label}</span>

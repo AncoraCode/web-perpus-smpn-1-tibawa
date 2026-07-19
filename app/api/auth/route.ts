@@ -15,10 +15,23 @@ export async function POST(request: Request) {
 
         const supabase = await createClient()
 
+        let targetUsername = username.trim()
+
+        // Cek apakah input username adalah NIP (jika ada user dengan NIP tersebut)
+        const { data: profileByNip } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('nip', targetUsername)
+            .maybeSingle()
+
+        if (profileByNip) {
+            targetUsername = profileByNip.username
+        }
+
         // Login menggunakan function login_guru
         const { data, error } = await supabase
             .rpc('login_guru', {
-                p_username: username,
+                p_username: targetUsername,
                 p_password: password
             })
             .single() as { data: any, error: PostgrestError }
