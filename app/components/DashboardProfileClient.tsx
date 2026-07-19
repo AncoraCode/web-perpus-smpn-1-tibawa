@@ -29,6 +29,7 @@ interface ProfileUser {
     telepon: string | null
     role: string
     foto_url: string | null
+    nip: string | null
 }
 
 /* ─────────────────────────────────────────
@@ -180,6 +181,7 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
         nama_lengkap: user.nama_lengkap,
         email: user.email ?? '',
         telepon: user.telepon ?? '',
+        nip: user.nip ?? '',
     })
     const [profileError, setProfileError] = useState('')
 
@@ -290,6 +292,7 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
                     email: profileForm.email || null,
                     telepon: profileForm.telepon || null,
                     foto_url: publicUrl,
+                    nip: profileForm.nip || null,
                 })
             })
 
@@ -326,6 +329,7 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
                     email: profileForm.email || null,
                     telepon: profileForm.telepon || null,
                     foto_url: null,
+                    nip: profileForm.nip || null,
                 })
             })
 
@@ -353,6 +357,7 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
                 nama_lengkap: profileForm.nama_lengkap.trim(),
                 email: profileForm.email.trim() || null,
                 telepon: profileForm.telepon.trim() || null,
+                nip: profileForm.nip.trim() || null,
             })
         })
 
@@ -366,7 +371,12 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
     }
 
     const handleCancelEdit = () => {
-        setProfileForm({ nama_lengkap: user.nama_lengkap, email: user.email ?? '', telepon: user.telepon ?? '' })
+        setProfileForm({
+            nama_lengkap: user.nama_lengkap,
+            email: user.email ?? '',
+            telepon: user.telepon ?? '',
+            nip: user.nip ?? '',
+        })
         setProfileError('')
         setIsEditing(false)
     }
@@ -483,6 +493,17 @@ export default function DashboardProfileClient({ user }: { user: ProfileUser }) 
                             onChange={e => { setProfileForm(p => ({ ...p, nama_lengkap: e.target.value })); setProfileError('') }}
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none"
                             placeholder="Nama lengkap" />
+                    </div>
+                </div>
+                <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">NIP</label>
+                    <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input type="text" value={profileForm.nip}
+                            disabled={!isEditing || isSaving}
+                            onChange={e => setProfileForm(p => ({ ...p, nip: e.target.value.replace(/\D/g, '') }))}
+                            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-gray-50 outline-none"
+                            placeholder="Masukkan NIP (opsional)" />
                     </div>
                 </div>
                 <div>

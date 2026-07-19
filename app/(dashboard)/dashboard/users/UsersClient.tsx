@@ -183,9 +183,9 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
     const filtered = useMemo(() => {
         const q = searchQuery.toLowerCase()
         return usersList.filter(u =>
-            u.nama_lengkap.toLowerCase().includes(q) ||
-            u.username.toLowerCase().includes(q) ||
-            u.email.toLowerCase().includes(q) ||
+            (u.nama_lengkap || '').toLowerCase().includes(q) ||
+            (u.username || '').toLowerCase().includes(q) ||
+            (u.email || '').toLowerCase().includes(q) ||
             (u.nip && u.nip.toLowerCase().includes(q))
         )
     }, [usersList, searchQuery])
@@ -394,7 +394,7 @@ export default function UsersClient({ usersData, currentUser }: UsersClientProps
                                             }
                                         </button>
                                     </div>
-                                    <p className="text-xs text-gray-500 font-mono mt-0.5">@{u.username}</p>
+                                    <p className="text-xs text-gray-500 font-mono mt-0.5">@{u.username} {u.nip ? `· NIP: ${u.nip}` : ''}</p>
                                     <div className="flex flex-wrap items-center gap-1.5 mt-1">
                                         <span className={`text-xs px-2 py-0.5 rounded font-semibold ${u.role === 'admin'
                                             ? 'bg-purple-100 text-purple-700'

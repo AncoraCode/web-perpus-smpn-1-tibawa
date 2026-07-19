@@ -44,27 +44,32 @@ export async function POST(request: Request) {
             )
         }
 
+        // Ambil data foto_url dan nip terbaru dari profiles
+        const { data: profileData } = await supabase
+            .from('profiles')
+            .select('foto_url, nip')
+            .eq('id', data.user_id)
+            .maybeSingle()
+
+        const userPayload = {
+            id:           data.user_id,
+            username:     data.username,
+            nama_lengkap: data.nama_lengkap,
+            email:        data.email,
+            role:         data.role,
+            foto_url:     profileData?.foto_url || data.foto_url || null,
+            nip:          profileData?.nip || null,
+        }
+
         // Buat response dengan cookie
         const response = NextResponse.json({
             success: true,
             message: 'Login berhasil',
-            user: {
-                id: data.user_id,
-                username: data.username,
-                nama_lengkap: data.nama_lengkap,
-                email: data.email,
-                role: data.role,
-            },
+            user: userPayload,
         })
 
         // Set cookie untuk session
-        response.cookies.set('user_session', JSON.stringify({
-            id: data.user_id,
-            username: data.username,
-            nama_lengkap: data.nama_lengkap,
-            email: data.email,
-            role: data.role,
-        }), {
+        response.cookies.set('user_session', JSON.stringify(userPayload), {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',

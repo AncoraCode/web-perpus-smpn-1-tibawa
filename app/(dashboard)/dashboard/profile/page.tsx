@@ -17,6 +17,7 @@ export default async function ProfilePage() {
         telepon: user.telepon || null,
         role: user.role || 'pengelola',
         foto_url: user.foto_url || null,
+        nip: user.nip || null,
     }
 
     return <DashboardProfileClient user={userData} />
