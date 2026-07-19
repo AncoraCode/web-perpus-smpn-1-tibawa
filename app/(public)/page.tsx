@@ -1,4 +1,4 @@
-import { BookOpen, TrendingUp, Info, Users, ArrowRight } from 'lucide-react'
+import { BookOpen, TrendingUp, Info, Users, ArrowRight, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
 import AnimatedCounter from '@/app/components/AnimatedCounter'
@@ -265,21 +265,28 @@ export default async function BerandaPage() {
                         <h2 className="font-semibold text-gray-800 text-sm">Tim Pengembang Web</h2>
                     </div>
 
-                    <div className="bg-primary bg-gradient-to-br from-primary to-primary2 rounded-2xl p-4">
-                        <div className="flex items-center gap-3 mb-3.5 pb-3 border-b border-white/10">
-                            <img
-                                src="/assets/img/logo-batch9.png"
-                                alt="Logo UNG Mengajar Batch 9"
-                                className="w-12 h-12 object-contain"
-                            />
-                            <div>
-                                <p className="text-white font-bold text-xs leading-tight uppercase tracking-wide">
-                                    UNG MENGAJAR BATCH 9
-                                </p>
-                                <p className="text-white/70 text-[10px] mt-0.5 font-medium">
-                                    Teknik Informatika
-                                </p>
-                            </div>
+                    <div className="bg-primary bg-gradient-to-br from-primary to-primary2 rounded-2xl p-4 w-auto">
+                        <div className="border-b border-white/10 mb-3.5 pb-3 group">
+                            <a href='https://ungmengajarb9spentib.vercel.app' target='_blank' title='Pergi ke website resmi kami' className="flex items-center gap-2 group-hover:scale-[99%] transition duration-300">
+                                <img
+                                    src="/assets/img/logo-batch9.png"
+                                    alt="Logo UNG Mengajar Batch 9"
+                                    className="w-12 h-12 object-contain group-hover:brightness-90 transition"
+                                />
+                                <div className='w-full'>
+                                    <p className="group-hover:brightness-90 transition text-white font-bold text-sm leading-tight uppercase tracking-wide">
+                                        UNG MENGAJAR BATCH 9
+                                    </p>
+                                    <p className="group-hover:brightness-90 transition text-white/70 text-[10px] mt-0.5 font-medium">
+                                        SMP Negeri 1 Tibawa
+                                    </p>
+                                </div>
+                                <div className="flex justify-center">
+                                    <button className="p-3 m-auto rounded-xl hover:bg-gray-50/5 transition group-hover:opacity-85">
+                                        <ExternalLink className='text-white w-4 h-4' />
+                                    </button>
+                                </div>
+                            </a>
                         </div>
 
                         <p className="text-white/80 text-xs leading-relaxed text-justify mb-1">
