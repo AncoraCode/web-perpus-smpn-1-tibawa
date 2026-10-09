@@ -4,7 +4,9 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import {
     Search, Plus, Edit2, Trash2, GraduationCap, X,
     MapPin, Phone, Mail, Users, CheckCircle2, XCircle,
+    FileSpreadsheet, Upload, AlertTriangle, Loader2,
 } from 'lucide-react'
+import * as XLSX from 'xlsx'
 import Modal from '@/app/components/Modal'
 import { createClient } from '@/utils/supabase/client'
 import AnimatedCounter from '@/app/components/AnimatedCounter'
@@ -27,11 +29,30 @@ interface Siswa {
     created_at: string
 }
 
+interface ExcelRowValid {
+    nis: string
+    nisn: string | null
+    nama_lengkap: string
+    jenis_kelamin: 'Laki-laki' | 'Perempuan' | null
+    alamat: string | null
+    telepon: string | null
+    email: string | null
+    status: 'aktif'
+    rowIndex: number
+}
+
+interface ExcelRowError {
+    rowIndex: number
+    nis: string
+    nama_lengkap: string
+    reason: string
+}
+
 type FormData = {
     nis: string
     nisn: string
     nama_lengkap: string
-    jenis_kelamin: 'Laki-laki' | 'Perempuan'
+    jenis_kelamin: 'Laki-laki' | 'Perempuan' | ''
     alamat: string
     telepon: string
     email: string
@@ -56,7 +77,7 @@ const NOMOR_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8']
 
 const EMPTY_FORM: FormData = {
     nis: '', nisn: '', nama_lengkap: '',
-    jenis_kelamin: 'Laki-laki',
+    jenis_kelamin: '',
     alamat: '', telepon: '', email: '',
     kelas_tingkat: '',
     kelas_nomor: '',
@@ -164,7 +185,7 @@ function SiswaFormFields({ form, formError, disabled, onChange }: FormFieldsProp
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">Jenis Kelamin</label>
                 <div className="flex gap-2">
                     <button type="button" disabled={disabled}
-                        onClick={() => onChange('jenis_kelamin', 'Laki-laki')}
+                        onClick={() => onChange('jenis_kelamin', form.jenis_kelamin === 'Laki-laki' ? '' : 'Laki-laki')}
                         className={`flex-1 py-2.5 rounded-lg border text-sm font-medium transition-colors ${form.jenis_kelamin === 'Laki-laki'
                                 ? 'bg-accent text-white border-accent'
                                 : 'bg-white text-gray-600 border-gray-200 hover:border-accent'
@@ -172,7 +193,7 @@ function SiswaFormFields({ form, formError, disabled, onChange }: FormFieldsProp
                         ♂ Laki-laki
                     </button>
                     <button type="button" disabled={disabled}
-                        onClick={() => onChange('jenis_kelamin', 'Perempuan')}
+                        onClick={() => onChange('jenis_kelamin', form.jenis_kelamin === 'Perempuan' ? '' : 'Perempuan')}
                         className={`flex-1 py-2.5 rounded-lg border text-sm font-medium transition-colors ${form.jenis_kelamin === 'Perempuan'
                                 ? 'bg-pink-500 text-white border-pink-500'
                                 : 'bg-white text-gray-600 border-gray-200 hover:border-pink-400'
@@ -301,6 +322,15 @@ export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
     const [showEditModal, setShowEditModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [showDetailModal, setShowDetailModal] = useState(false)
+    const [showUploadModal, setShowUploadModal] = useState(false)
+
+    // Excel States
+    const [excelFile, setExcelFile] = useState<File | null>(null)
+    const [excelStep, setExcelStep] = useState<'idle' | 'checking' | 'validated' | 'saving' | 'success'>('idle')
+    const [excelValidData, setExcelValidData] = useState<ExcelRowValid[]>([])
+    const [excelErrors, setExcelErrors] = useState<ExcelRowError[]>([])
+    const [excelCheckMessage, setExcelCheckMessage] = useState('')
+
     const [notif, setNotif] = useState<{ show: boolean; success: boolean; message: string }>({
         show: false, success: true, message: ''
     })
@@ -312,6 +342,192 @@ export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
     const [form, setForm] = useState<FormData>({ ...EMPTY_FORM })
 
     const supabase = createClient()
+
+    /* ── Excel Handlers ── */
+    const handleDownloadFormatExcel = () => {
+        const headers = [
+            ['nis', 'nisn', 'nama_lengkap', 'alamat', 'telepon']
+        ]
+
+        const worksheet = XLSX.utils.aoa_to_sheet(headers)
+        worksheet['!cols'] = [
+            { wch: 15 }, // nis
+            { wch: 15 }, // nisn
+            { wch: 28 }, // nama_lengkap
+            { wch: 30 }, // alamat
+            { wch: 18 }, // telepon
+        ]
+
+        const workbook = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Data Siswa')
+        XLSX.writeFile(workbook, 'Format_Import_Siswa.xlsx')
+    }
+
+    const openUploadExcelModal = () => {
+        setExcelFile(null)
+        setExcelStep('idle')
+        setExcelValidData([])
+        setExcelErrors([])
+        setExcelCheckMessage('')
+        setShowUploadModal(true)
+    }
+
+    const closeUploadExcelModal = () => {
+        setShowUploadModal(false)
+        setExcelFile(null)
+        setExcelStep('idle')
+        setExcelValidData([])
+        setExcelErrors([])
+        setExcelCheckMessage('')
+    }
+
+    const handleCheckExcel = async () => {
+        if (!excelFile) return
+
+        setExcelStep('checking')
+        setExcelCheckMessage('Memeriksa file Excel... Memeriksa kolom wajib, format data, dan duplikasi NIS...')
+
+        await new Promise(res => setTimeout(res, 500))
+
+        try {
+            const arrayBuffer = await excelFile.arrayBuffer()
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' })
+
+            const firstSheetName = workbook.SheetNames[0]
+            if (!firstSheetName) {
+                setExcelErrors([{ rowIndex: 0, nis: '-', nama_lengkap: '-', reason: 'Sheet Excel kosong' }])
+                setExcelStep('validated')
+                return
+            }
+
+            const worksheet = workbook.Sheets[firstSheetName]
+            const rawJson: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' })
+
+            if (rawJson.length === 0) {
+                setExcelErrors([{ rowIndex: 0, nis: '-', nama_lengkap: '-', reason: 'File Excel tidak memiliki data baris' }])
+                setExcelStep('validated')
+                return
+            }
+
+            const existingNisSet = new Set(siswaList.map(s => String(s.nis).trim().toLowerCase()))
+            
+            const validRows: ExcelRowValid[] = []
+            const errorRows: ExcelRowError[] = []
+            const nisInFileSet = new Set<string>()
+
+            rawJson.forEach((row: any, idx: number) => {
+                const rowNum = idx + 2
+
+                const getVal = (...keys: string[]) => {
+                    for (const key of Object.keys(row)) {
+                        const cleanKey = key.trim().toLowerCase()
+                        if (keys.some(k => k.toLowerCase() === cleanKey)) {
+                            return String(row[key] ?? '').trim()
+                        }
+                    }
+                    return ''
+                }
+
+                const nis = getVal('nis', 'nomor induk siswa')
+                const nisn = getVal('nisn', 'nomor induk siswa nasional')
+                const nama_lengkap = getVal('nama_lengkap', 'nama lengkap', 'nama')
+                const jkRaw = getVal('jenis_kelamin', 'jenis kelamin', 'jk')
+                const alamat = getVal('alamat')
+                const telepon = getVal('telepon', 'no hp', 'hp', 'phone', 'no. telp', 'no telp')
+                const email = getVal('email')
+
+                if (!nis && !nama_lengkap && !jkRaw) {
+                    return
+                }
+
+                if (!nis) {
+                    errorRows.push({ rowIndex: rowNum, nis: '-', nama_lengkap: nama_lengkap || '-', reason: 'NIS wajib diisi' })
+                    return
+                }
+
+                if (!nama_lengkap) {
+                    errorRows.push({ rowIndex: rowNum, nis, nama_lengkap: '-', reason: 'Nama Lengkap wajib diisi' })
+                    return
+                }
+
+                let jenis_kelamin: 'Laki-laki' | 'Perempuan' | null = null
+                const jkLower = jkRaw.toLowerCase()
+                if (jkLower === 'p' || jkLower === 'perempuan' || jkLower.includes('wanita') || jkLower.includes('perem')) {
+                    jenis_kelamin = 'Perempuan'
+                } else if (jkLower === 'l' || jkLower === 'laki-laki' || jkLower === 'laki' || jkLower.includes('pria')) {
+                    jenis_kelamin = 'Laki-laki'
+                }
+
+                const nisLower = nis.toLowerCase()
+                if (nisInFileSet.has(nisLower)) {
+                    errorRows.push({ rowIndex: rowNum, nis, nama_lengkap, reason: `NIS "${nis}" duplikat di dalam file Excel` })
+                    return
+                }
+                nisInFileSet.add(nisLower)
+
+                if (existingNisSet.has(nisLower)) {
+                    errorRows.push({ rowIndex: rowNum, nis, nama_lengkap, reason: `NIS "${nis}" sudah terdaftar di database` })
+                    return
+                }
+
+                validRows.push({
+                    rowIndex: rowNum,
+                    nis,
+                    nisn: nisn || null,
+                    nama_lengkap,
+                    jenis_kelamin,
+                    alamat: alamat || null,
+                    telepon: telepon || null,
+                    email: email || null,
+                    status: 'aktif'
+                })
+            })
+
+            setExcelValidData(validRows)
+            setExcelErrors(errorRows)
+            setExcelStep('validated')
+        } catch (err: any) {
+            console.error('Error parsing Excel:', err)
+            setExcelErrors([{ rowIndex: 0, nis: '-', nama_lengkap: '-', reason: 'Gagal membaca file Excel. Pastikan format file sesuai.' }])
+            setExcelStep('validated')
+        }
+    }
+
+    const handleSaveExcel = async () => {
+        if (excelValidData.length === 0) return
+
+        setExcelStep('saving')
+
+        const payload = excelValidData.map(d => ({
+            nis: d.nis,
+            nisn: d.nisn,
+            nama_lengkap: d.nama_lengkap,
+            jenis_kelamin: d.jenis_kelamin,
+            alamat: d.alamat,
+            telepon: d.telepon,
+            email: d.email,
+            kelas: null,
+            tahun_ajaran: null,
+            status: d.status
+        }))
+
+        const { data, error } = await supabase
+            .from('siswa')
+            .insert(payload)
+            .select()
+
+        if (error) {
+            setExcelErrors([{ rowIndex: 0, nis: '-', nama_lengkap: '-', reason: 'Gagal menyimpan data: ' + error.message }])
+            setExcelStep('validated')
+            return
+        }
+
+        if (data && data.length > 0) {
+            setSiswaList(prev => [...data, ...prev])
+        }
+
+        setExcelStep('success')
+    }
 
     /* ── filtered list ── */
     const filtered = useMemo(() => siswaList.filter(s => {
@@ -397,7 +613,7 @@ export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
             nis: s.nis,
             nisn: s.nisn ?? '',
             nama_lengkap: s.nama_lengkap,
-            jenis_kelamin: s.jenis_kelamin === 'Perempuan' ? 'Perempuan' : 'Laki-laki',
+            jenis_kelamin: s.jenis_kelamin === 'Perempuan' ? 'Perempuan' : s.jenis_kelamin === 'Laki-laki' ? 'Laki-laki' : '',
             alamat: s.alamat ?? '',
             telepon: s.telepon ?? '',
             email: s.email ?? '',
@@ -418,7 +634,7 @@ export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
         nis: form.nis.trim(),
         nisn: form.nisn.trim() || null,
         nama_lengkap: form.nama_lengkap.trim(),
-        jenis_kelamin: form.jenis_kelamin,
+        jenis_kelamin: form.jenis_kelamin || null,
         alamat: form.alamat.trim() || null,
         telepon: form.telepon.trim() || null,
         email: form.email.trim() || null,
@@ -564,10 +780,30 @@ export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
 
             {/* Add Button */}
             <button onClick={openAdd}
-                className="w-full py-3 bg-accent text-white rounded-xl font-medium hover:bg-accent/90 transition-colors flex items-center justify-center gap-2 text-sm">
+                className="w-full py-3 bg-accent text-white rounded-xl font-medium hover:bg-accent/90 transition-colors flex items-center justify-center gap-2 text-sm shadow-sm">
                 <Plus className="w-4 h-4" />
                 Tambah Siswa Baru
             </button>
+
+            {/* Excel Buttons: Format Excel & Upload Excel */}
+            <div className="grid grid-cols-2 gap-3">
+                <button
+                    type="button"
+                    onClick={handleDownloadFormatExcel}
+                    className="py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm shadow-sm"
+                >
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                    Format Excel
+                </button>
+                <button
+                    type="button"
+                    onClick={openUploadExcelModal}
+                    className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm shadow-sm"
+                >
+                    <Upload className="w-3.5 h-3.5" />
+                    Upload Excel
+                </button>
+            </div>
 
             {/* List */}
             <div className="space-y-3">
@@ -758,6 +994,185 @@ export default function SiswaClient({ siswaData, user }: SiswaClientProps) {
                         : <XCircle className="w-14 h-14 text-red-500" />
                     }
                     <p className="text-sm text-gray-700 text-center">{notif.message}</p>
+                </div>
+            </Modal>
+
+            {/* Modal Import Excel */}
+            <Modal
+                isOpen={showUploadModal}
+                onClose={closeUploadExcelModal}
+                title="Import Data Siswa via Excel"
+            >
+                <div className="space-y-4 py-1">
+                    {/* Step: IDLE */}
+                    {excelStep === 'idle' && (
+                        <div className="space-y-3">
+                            <p className="text-xs text-gray-500">
+                                Pilih file Excel (<span className="font-semibold text-gray-700">.xlsx, .xls, .csv</span>) yang berisi data siswa sesuai format.
+                            </p>
+                            <div className="border-2 border-dashed border-gray-200 hover:border-emerald-500 rounded-xl p-6 text-center transition-colors bg-gray-50/50">
+                                <input
+                                    type="file"
+                                    accept=".xlsx, .xls, .csv"
+                                    id="excel-file-input"
+                                    className="hidden"
+                                    onChange={e => {
+                                        if (e.target.files && e.target.files[0]) {
+                                            setExcelFile(e.target.files[0])
+                                        }
+                                    }}
+                                />
+                                <label htmlFor="excel-file-input" className="cursor-pointer flex flex-col items-center gap-2">
+                                    <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-1">
+                                        <FileSpreadsheet className="w-6 h-6" />
+                                    </div>
+                                    <span className="text-sm font-semibold text-gray-700">
+                                        {excelFile ? excelFile.name : 'Klik untuk memilih file Excel'}
+                                    </span>
+                                    <span className="text-xs text-gray-400">
+                                        {excelFile ? `${(excelFile.size / 1024).toFixed(1)} KB` : 'Format disarankan: .xlsx'}
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Step: CHECKING */}
+                    {excelStep === 'checking' && (
+                        <div className="py-8 flex flex-col items-center justify-center space-y-3">
+                            <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
+                            <p className="text-sm font-medium text-gray-700 text-center">Memeriksa file Excel...</p>
+                            <p className="text-xs text-gray-500 text-center max-w-xs">{excelCheckMessage}</p>
+                        </div>
+                    )}
+
+                    {/* Step: VALIDATED */}
+                    {excelStep === 'validated' && (
+                        <div className="space-y-4">
+                            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-start gap-2.5">
+                                <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                                <div className="text-xs text-emerald-800">
+                                    <p className="font-bold text-sm">Pemeriksaan Selesai!</p>
+                                    <p className="mt-0.5">
+                                        Terdapat <span className="font-bold">{excelValidData.length} data valid</span> yang siap ditambahkan.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Error Breakdown */}
+                            {excelErrors.length > 0 && (
+                                <div className="space-y-2">
+                                    <p className="text-xs font-semibold text-red-600 flex items-center gap-1">
+                                        <AlertTriangle className="w-4 h-4" />
+                                        {excelErrors.length} Baris Bermasalah (Akan Dilewati):
+                                    </p>
+                                    <div className="max-h-40 overflow-y-auto border border-red-100 rounded-xl bg-red-50/50 divide-y divide-red-100 text-xs">
+                                        {excelErrors.map((err, i) => (
+                                            <div key={i} className="p-2.5 flex items-start justify-between gap-2">
+                                                <div>
+                                                    <span className="font-mono font-bold text-red-700">Baris {err.rowIndex}:</span>{' '}
+                                                    <span className="font-medium text-gray-800">{err.nama_lengkap}</span>{' '}
+                                                    {err.nis !== '-' && <span className="text-gray-500">(NIS: {err.nis})</span>}
+                                                </div>
+                                                <span className="text-red-600 text-right flex-shrink-0">{err.reason}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Step: SAVING */}
+                    {excelStep === 'saving' && (
+                        <div className="py-8 flex flex-col items-center justify-center space-y-3">
+                            <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
+                            <p className="text-sm font-medium text-gray-700">Menyimpan data siswa ke database...</p>
+                        </div>
+                    )}
+
+                    {/* Step: SUCCESS */}
+                    {excelStep === 'success' && (
+                        <div className="py-6 flex flex-col items-center justify-center space-y-3 text-center">
+                            <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-1">
+                                <CheckCircle2 className="w-8 h-8" />
+                            </div>
+                            <h4 className="text-base font-bold text-gray-900">Data Berhasil Ditambahkan!</h4>
+                            <p className="text-xs text-gray-600 max-w-xs">
+                                Sebanyak <span className="font-bold text-emerald-600">{excelValidData.length} siswa</span> berhasil disimpan ke dalam data perpustakaan.
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Action Buttons in Modal */}
+                    <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                        {/* Secondary button: Batal (HILANG saat excelStep === 'success') */}
+                        {excelStep !== 'success' && (
+                            <button
+                                type="button"
+                                onClick={closeUploadExcelModal}
+                                disabled={excelStep === 'checking' || excelStep === 'saving'}
+                                className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                                Batal
+                            </button>
+                        )}
+
+                        {/* Primary button transitions: Upload & Cek -> Simpan Data -> Tutup */}
+                        {excelStep === 'idle' && (
+                            <button
+                                type="button"
+                                onClick={handleCheckExcel}
+                                disabled={!excelFile}
+                                className="px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors disabled:opacity-50 font-medium flex items-center gap-2"
+                            >
+                                Upload & Cek
+                            </button>
+                        )}
+
+                        {excelStep === 'checking' && (
+                            <button
+                                type="button"
+                                disabled
+                                className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg opacity-75 font-medium flex items-center gap-2 cursor-not-allowed"
+                            >
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Memeriksa...
+                            </button>
+                        )}
+
+                        {excelStep === 'validated' && (
+                            <button
+                                type="button"
+                                onClick={handleSaveExcel}
+                                disabled={excelValidData.length === 0}
+                                className="px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors disabled:opacity-50 font-medium flex items-center gap-2"
+                            >
+                                Simpan Data ({excelValidData.length})
+                            </button>
+                        )}
+
+                        {excelStep === 'saving' && (
+                            <button
+                                type="button"
+                                disabled
+                                className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg opacity-75 font-medium flex items-center gap-2 cursor-not-allowed"
+                            >
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Menyimpan...
+                            </button>
+                        )}
+
+                        {excelStep === 'success' && (
+                            <button
+                                type="button"
+                                onClick={closeUploadExcelModal}
+                                className="px-5 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors font-medium"
+                            >
+                                Tutup
+                            </button>
+                        )}
+                    </div>
                 </div>
             </Modal>
 
